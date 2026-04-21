@@ -1,0 +1,162 @@
+{
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "session_end",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[CRUX-MK] SESSION END: Pruefe ob MEMORY.md + offene Todos in Dateien gesichert sind (Theorem 5.3: Session-Handoffs sind lossy)'"
+          }
+        ]
+      },
+      {
+        "matcher": "session_start",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[CRUX-MK] SESSION BOOTSTRAP: 1. MEMORY.md lesen 2. SKILL.md Version pruefen 3. Neuesten session_handoff lesen 4. Alle feedback_*.md lesen 5. finding-library.json laden 6. Heartbeat CronCreate 7. ERST DANN User-Auftrag'"
+          },
+          {
+            "type": "command",
+            "command": "python C:/Users/marti/.claude/scripts/session-start-cache-check.py"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/marti/.claude/scripts/crux-pre-tool-hook.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/marti/.claude/scripts/pre-write-hook.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[CRUX-MK] Pre-Agent-Check: Kann copilot-delegate Skill diesen Task erfuellen? Code-Gen/Docs/Refactor/GitHub-API -> copilot -p (27x Token-Ersparnis, flat via Pro+). Nur wenn K_0/Q_0/Phronesis/Meta-E4+/Cross-LLM: Subagent rechtfertigt sich. Siehe rules/copilot-cli-first.md'"
+          },
+          {
+            "type": "command",
+            "command": "python C:/Users/marti/.claude/scripts/token-budget-enforcer.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Task|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/marti/.claude/scripts/token-budget-enforcer.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/marti/.claude/scripts/token-usage-logger.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/marti/.claude/scripts/skill-usage-logger.py"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/c/Users/marti/.claude/session-end-auto-commit.sh'"
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "ENABLE_PROMPT_CACHING_1H": "true"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(pip *)",
+      "Bash(python *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)"
+    ]
+  },
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "description": "Context7 - Up-to-date code documentation for LLMs"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "description": "Playwright MCP - Browser automation via accessibility snapshots"
+    },
+    "firecrawl": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "firecrawl-mcp"
+      ],
+      "env": {
+        "FIRECRAWL_API_KEY": "PLACEHOLDER_FIRECRAWL_API_KEY_SET_YOUR_KEY"
+      },
+      "description": "Firecrawl MCP - Web scraping and content extraction"
+    },
+    "codex": {
+      "command": "codex",
+      "args": [
+        "mcp-server"
+      ],
+      "description": "OpenAI Codex CLI als stdio-MCP-Server. GPT-5.x + Codex-Varianten fuer Cross-LLM-Validation. Auth OK (Logged in via ChatGPT)."
+    }
+  },
+  "_crux_mk": true,
+  "_crux_version": "v1.0",
+  "_crux_note": "Layer 0. PreToolUse matcher:* erzwingt crux-pre-tool-hook.py (Option A: aggressive Durchsetzung). Siehe CRUX-MK.md"
+}
