@@ -21,6 +21,18 @@ import re
 import sys
 from pathlib import Path
 
+
+# [CRUX-MK] Runtime-Gate (Layer 0)
+try:
+    import sys as _crux_sys, pathlib as _crux_path
+    _crux_sys.path.insert(0, str(_crux_path.Path.home() / ".claude" / "scripts"))
+    import crux_runtime as _crux_rt  # auto-checks kill-switch on import
+except (ImportError, SystemExit):
+    import sys as _crux_sys
+    _crux_kf = _crux_path.Path.home() / ".kemmer-grid" / "killed.flag" if '_crux_path' in dir() else None
+    if _crux_kf and _crux_kf.exists(): _crux_sys.exit(1)
+# /[CRUX-MK] Runtime-Gate
+
 # BIAS-036 Fix: Force UTF-8 stdout on Windows to handle Unicode chars like \u03c9
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")

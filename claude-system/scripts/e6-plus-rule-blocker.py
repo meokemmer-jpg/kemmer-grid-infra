@@ -41,6 +41,18 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
+
+# [CRUX-MK] Runtime-Gate (Layer 0)
+try:
+    import sys as _crux_sys, pathlib as _crux_path
+    _crux_sys.path.insert(0, str(_crux_path.Path.home() / ".claude" / "scripts"))
+    import crux_runtime as _crux_rt  # auto-checks kill-switch on import
+except (ImportError, SystemExit):
+    import sys as _crux_sys
+    _crux_kf = _crux_path.Path.home() / ".kemmer-grid" / "killed.flag" if '_crux_path' in dir() else None
+    if _crux_kf and _crux_kf.exists(): _crux_sys.exit(1)
+# /[CRUX-MK] Runtime-Gate
+
 SCOPE_REGEX = re.compile(r"\.claude[/\\]rules[/\\]meta-e([6-9]|[1-9][0-9])-[\w\-]+\.md$", re.IGNORECASE)
 
 # v2 METAD2 (2026-04-19): Auf Basis 4-Iter-Test (Codex+Gemini+Copilot, 8 Frames):

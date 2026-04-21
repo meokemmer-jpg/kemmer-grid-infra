@@ -22,6 +22,18 @@ import argparse, json, os, shutil, sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+
+# [CRUX-MK] Runtime-Gate (Layer 0)
+try:
+    import sys as _crux_sys, pathlib as _crux_path
+    _crux_sys.path.insert(0, str(_crux_path.Path.home() / ".claude" / "scripts"))
+    import crux_runtime as _crux_rt  # auto-checks kill-switch on import
+except (ImportError, SystemExit):
+    import sys as _crux_sys
+    _crux_kf = _crux_path.Path.home() / ".kemmer-grid" / "killed.flag" if '_crux_path' in dir() else None
+    if _crux_kf and _crux_kf.exists(): _crux_sys.exit(1)
+# /[CRUX-MK] Runtime-Gate
+
 FALLBACK_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
 MANIFEST = FALLBACK_DIR / "FALLBACK-manifest.json"
 HUB = Path(os.environ.get("BRANCH_HUB", "G:/Meine Ablage/Claude-Knowledge-System/branch-hub"))
