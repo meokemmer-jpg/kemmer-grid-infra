@@ -106,10 +106,54 @@ Diese Regel ist falsifiziert wenn:
 - Der Aggregat-Ratio-Hebel in Produktionslaeufen ueber 4 Wochen unter 15x bleibt, ODER
 - Invarianten nachweisbar eingehalten sind, aber Hebel trotzdem kollabiert.
 
-### Replikations-Prognose
+### Replikations-Prognose (SUPERSEDED durch Welle-13 Token-Accounting-Audit)
 
-Bei voller Invarianten-Einhaltung: Median-Hebel **25-35x ueber 10 Replikationen**, p25 bei 18-22x, p75 bei 40-55x. Einzel-Welle-Peaks von 40x sind Spitze der Verteilung, kein repraesentativer Wert.
+~~Bei voller Invarianten-Einhaltung: Median-Hebel 25-35x ueber 10 Replikationen, p25 bei 18-22x, p75 bei 40-55x. Einzel-Welle-Peaks von 40x sind Spitze der Verteilung, kein repraesentativer Wert.~~
 
-**Offene Flanke:** Empirische Invarianten-Messung in Welle-10 steht aus (nur post-hoc plausibilisiert). Welle-13 sollte Pre-Flight-Invarianten-Check und Post-Flight-Audit einbauen.
+**Diese Prognose ist durch Welle-13 falsifiziert**. Siehe naechste Sub-Section.
+
+---
+
+## § Welle-13 Token-Accounting-Korrektur (2026-04-20, K_0-relevant)
+
+**Belegung:** `branch-hub/findings/WELLE-13-TOKEN-ACCOUNTING-AUDIT-2026-04-20.md`
+**Status:** Hebel-Claim der obigen § Cascade-Hebel-Invarianten **falsifiziert**. Invarianten I1-I5 **bleiben gueltig** als Design-Prinzipien (unabhaengig vom Hebel).
+
+### Was falsch war
+
+Welle-10-XX-Finding behauptete "40x-Hebel = 1.513k Flat-Tokens / 35k Claude". Realer Claude-Verbrauch: **~7.6M Tokens** (Input 39 + Output 8.088 + Cache-Creation 1.917.856 + Cache-Read 2.255.336 + Orchestrator-Fenster 3.407.373). Faktor ~1.518 unterschaetzt.
+
+### Echter Hebel (korrigiert)
+
+- Raw: 453k Flat / 7.59M Claude = **0.06x** (Flat-Output ist ein Sechzehntel des Claude-Verbrauchs)
+- USD-normalisiert (1h-Cache-TTL): Claude ~54 USD vs Flat-Wert ~11 USD = **-43 USD NETTO MINUS pro Cascade-Lauf**
+- Welle-13-Replikation (HeyLou B200, kontrolliert): Hebel **0.5x** — konsistent mit Korrektur.
+
+### Warum die Invarianten trotzdem gelten
+
+Die 5 Invarianten (orthogonale Partitionierung, kanonische Schnittstellen, monotone Selektion, gebundene Parallelitaet, persistente externe Zustandsfuehrung) senken **Koordinationskosten**. Das ist unabhaengig vom Token-Hebel-Claim. Sie bleiben als **Cascade-Design-Prinzipien** valide, nur nicht als Token-Multiplikator-Rechtfertigung.
+
+### Konsequenz fuer Architektur
+
+- **Cascade-Subagenten** sind rho-negativ, wenn Claude Cache-Read + Cache-Creation zahlt. Zu vermeiden.
+- **Flat-LLM-only-Orchestrator** (Claude nur Queue-Reader + Dispatcher, <500 Tokens/Aufgabe) ist der rho-positive Weg. Belegt durch DF-11 Welle-14 Build: <$0.01 Claude pro Wargame.
+- **Token-Engpass-Hierarchie** bleibt: Martin-Zeit > Claude-Opus > Flat-LLMs. Die Rangfolge stimmt. Falsch war die Annahme dass Cascade den Claude-Verbrauch klein halten kann — das Gegenteil ist wahr, Cache-Kosten dominieren.
+
+### Telemetry-Leck (Grundursache)
+
+Claude Code CLI liefert Token-Usage nicht an PostToolUse-Hooks. 693 Log-Entries mit 0-Tokens. Fix-Pfad A: Transcript-JSONL post-hoc parsen. Ohne Fix: jede Token-Messung via Hook ist wertlos, nur Session-Transcript-Parse ist valide.
+
+### Neue Falsifikations-Bedingung (diese Sub-Section)
+
+Falsifiziert wenn:
+- Cache-Discount (1h-TTL, Cache-Read $0.50/M) auf Faktor <0.10 pro Token faellt → dann koennte Cascade wieder rho-positiv werden
+- Anthropic die Hook-API um Token-Usage-Injektion erweitert → dann exaktere Messung live moeglich
+- Flat-LLMs ihre Preise ihrerseits einfuehren → Flat-Vorteil schwindet
+
+### Rollback-Status
+
+- `branch-hub/findings/WORK-D-FINAL-TOKEN-PUSH-XX-2026-04-19.md`: SUPERSEDED-Header gesetzt (2026-04-20)
+- `MEMORY.md`: Token-Orchestration-Eintrag bleibt (war Framework, nicht 40x-Claim)
+- Keine Rule-Rollbacks noetig (40x-Claim war nicht Rule-verankert)
 
 [CRUX-MK]
