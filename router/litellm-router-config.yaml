@@ -138,9 +138,18 @@ model_list:
       cost_per_call: 0
 
 # ========== ROUTER SETTINGS ==========
+# LiteLLM-Router kennt nur Standard-Strategies. Custom Kemmer-Criticality-Logic
+# wird im pre_call-Hook (scripts/crux-precall-hook.py) implementiert, nicht im Router.
+# Fix 2026-04-21: routing_strategy criticality-based-routing → simple-shuffle
 router_settings:
-  routing_strategy: criticality-based-routing
+  routing_strategy: simple-shuffle
+  num_retries: 3
+  timeout: 60
+  allowed_fails: 3
+  cooldown_time: 30
 
+# ========== KEMMER CRITICALITY LOGIC (verwertet von pre_call-Hook, NICHT von LiteLLM) ==========
+kemmer_criticality:
   # Criticality-Budgeting (nicht Token-Cap!)
   criticality_scoring:
     K_0_tags: ["capital", "finance", "wegzugssteuer", "trading", "vermoegen", "kpm"]
