@@ -64,3 +64,25 @@ Write-Host "  Worker/Mac-Install via:" -ForegroundColor Yellow
 Write-Host "    Expand-Archive -Path `"$Dest`" -DestinationPath `"`$env:USERPROFILE\.claude`" -Force" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "  Or: git clone https://github.com/meokemmer-jpg/kemmer-grid-infra.git" -ForegroundColor Yellow
+
+# === P4 Self-Healing: Sync .version fuer rules-verify ===
+# (Cross-LLM-HARDENED: signierter Git-Tag ist Authoritative fuer Rules-Hash)
+$VersionFile = Join-Path $Source "rules\.version"
+$RepoDir = Join-Path $env:USERPROFILE "Projects\kemmer-grid-infra"
+if ((Test-Path $RepoDir) -and (Test-Path "$RepoDir\.git")) {
+    # Letzter seed-v* Tag ermitteln
+    $LatestTag = (git -C $RepoDir tag --list "seed-v*" | Sort-Object | Select-Object -Last 1)
+    if ($LatestTag) {
+        Set-Content -Path $VersionFile -Value $LatestTag -NoNewline -Encoding utf8
+        Write-Host ""
+        Write-Host "  .version updated: $VersionFile" -ForegroundColor Cyan
+        Write-Host "  Current tag: $LatestTag" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "  Verify rules-hash via:" -ForegroundColor Yellow
+        Write-Host "    python $RepoDir\scripts\self-healing\rules-verify.py" -ForegroundColor Yellow
+    } else {
+        Write-Host ""
+        Write-Host "  NOTE: No seed-v* git tag found. Create via:" -ForegroundColor Yellow
+        Write-Host "    cd $RepoDir && git tag -a seed-v$Date-a -m 'Seed-Release' && git push origin seed-v$Date-a" -ForegroundColor Yellow
+    }
+}

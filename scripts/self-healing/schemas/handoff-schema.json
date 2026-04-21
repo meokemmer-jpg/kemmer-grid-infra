@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://meokemmer-jpg.github.io/kemmer-grid-infra/schemas/handoff-schema.json",
+  "title": "Kemmer-Grid Handoff/Inbox/Proposal Schema",
+  "description": "Schicht 3 Consistency-Check Schema. P5a Gemini-Fix. Min-Frontmatter-Fields Pflicht.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["type", "from", "to", "date", "crux-mk"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["handoff", "inbox", "status", "proposal", "decision-card", "finding", "status-update + deliverables", "welcome + coordination", "seed-completion-ack"]
+    },
+    "from": { "type": "string", "minLength": 3 },
+    "to": { "type": "string", "minLength": 3 },
+    "date": { "type": "string", "minLength": 10 },
+    "crux-mk": { "type": "boolean", "const": true },
+    "status": { "type": "string" },
+    "ref": { "type": "string" },
+    "supersedes": { "type": "string" }
+  }
+}

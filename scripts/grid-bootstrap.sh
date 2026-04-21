@@ -16,6 +16,27 @@ else
   echo "[grid-bootstrap] WARN: crux-check.sh nicht gefunden. CRUX-Layer-0 inactive." >&2
 fi
 # === END LAYER 0 ===
+
+# === SELF-HEALING PHASE 1: Rules-Verify (Schicht 5 + P4) ===
+# Cross-LLM-HARDENED 2/2 MODIFY (Codex + Gemini 2026-04-21).
+# Bei Rules-Divergenz: 5-Min-Grace, dann halt_bootstrap.
+# Steuerung via env SELF_HEALING_MODE:
+#   warn  (default fuer worker) — rc != 0 wird protokolliert, aber Bootstrap laeuft weiter
+#   halt  (default fuer primary/validator) — rc != 0 stoppt Bootstrap
+SELF_HEALING_MODE="${SELF_HEALING_MODE:-warn}"
+if [ -x "$(command -v python3)" ] && [ -f "$SCRIPT_DIR/self-healing/rules-verify.py" ]; then
+  if [ "$SELF_HEALING_MODE" = "halt" ]; then
+    python3 "$SCRIPT_DIR/self-healing/rules-verify.py" --halt-on-fail --grace-sec 300 || {
+      echo "[grid-bootstrap] Self-Healing Schicht-5 verweigert Bootstrap (Rules-Divergenz)."
+      exit 1
+    }
+  else
+    python3 "$SCRIPT_DIR/self-healing/rules-verify.py" || \
+      echo "[grid-bootstrap] WARN: Self-Healing Schicht-5 Rules-Divergenz erkannt (mode=warn)." >&2
+  fi
+fi
+# === END SELF-HEALING ===
+
 # Idempotenter Grid-Bootstrap fuer Mac/Linux.
 set -euo pipefail
 
