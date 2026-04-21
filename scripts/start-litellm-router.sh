@@ -69,9 +69,13 @@ fi
 # Verify litellm available
 if ! command -v litellm &>/dev/null; then
   echo "[CRUX-MK] ERROR: litellm not on PATH" >&2
-  echo "  Install: pip install litellm" >&2
+  echo "  Install: pip install 'litellm[proxy]'" >&2
   exit 1
 fi
+
+# Windows: force UTF-8 to avoid cp1252 UnicodeEncodeError in LiteLLM logs
+export PYTHONIOENCODING=utf-8
+export PYTHONUTF8=1
 
 # Log Router-Start
 ROUTER_LOG="${HOME}/.kemmer-grid/router-events.jsonl"
