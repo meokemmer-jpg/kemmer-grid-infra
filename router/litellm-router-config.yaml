@@ -105,55 +105,86 @@ model_list:
       monthly_request_budget: 1500
       cost_marginal_eur: 0
 
-  # ========== TIER 3: Local Inference (Mac M5 LIVE seit 2026-04-21T12:30) ==========
-  # Mac LAN-IP: 192.168.1.140 (MAC-M5-01, bestaetigt durch mac-inbox 12:55)
-  # Status-Reihenfolge: gemma2:27b (geladen), gemma3:27b (pullt 26%), llama3.3:70b (queued), mxbai-embed (geladen)
+  # ========== TIER 3: Local Inference (Mac M5 via SSH-Tunnel seit 2026-04-21T13:20) ==========
+  # Mac LAN-IP: 192.168.1.140 (MAC-M5-01). Martin-Sicherheits-Direktive: "maximale sicherheit, oeffnen wenn brauchen".
+  # Zugriff nur via SSH-Tunnel (ssh -L 11434:localhost:11434 make@192.168.1.140).
+  # Daher api_base localhost:11434 statt LAN-IP — Ollama selbst bleibt nicht LAN-exposed.
+  # Pending: SSH-Pubkey-Exchange (inbox/to-mac-m5-from-work-d2-ssh-pubkey-2026-04-21.md).
 
   - model_name: gemma2-27b-local
     litellm_params:
       model: ollama/gemma2:27b
-      api_base: http://192.168.1.140:11434
+      api_base: http://localhost:11434
     model_info:
       tier: local-inference
       use_cases: ["routine-code", "docs-drafts", "classification", "routing-decisions", "nightly-triage", "embedding-prep"]
       cost_per_call: 0
       latency_seconds_expected: 1-5
-      availability: "Mac M5 Max (LIVE 2026-04-21)"
+      availability: "Mac M5 Max LIVE (15 GB loaded, via SSH-Tunnel)"
       fallback_on_unreachable: "gemini-2.5-pro"
+      tunnel_required: true
 
   - model_name: gemma3-27b-local
     litellm_params:
       model: ollama/gemma3:27b
-      api_base: http://192.168.1.140:11434
+      api_base: http://localhost:11434
     model_info:
       tier: local-inference
       use_cases: ["routine-code", "docs-drafts", "classification", "improved-reasoning-over-gemma2"]
       cost_per_call: 0
       latency_seconds_expected: 1-5
-      availability: "Mac M5 Max (Pull in progress ETA ~2h 2026-04-21T12:55)"
+      availability: "Mac M5 Max (Pull 95% 2026-04-21T13:15)"
       fallback_on_unreachable: "gemma2-27b-local"
+      tunnel_required: true
 
   - model_name: llama3-70b-local
     litellm_params:
       model: ollama/llama3.3:70b-instruct-q4_K_M
-      api_base: http://192.168.1.140:11434
+      api_base: http://localhost:11434
     model_info:
       tier: local-inference
       use_cases: ["complex-routine", "long-context-summary", "deep-reasoning-local"]
       cost_per_call: 0
       optional: true
-      availability: "Mac M5 Max (Queued, Martin-OK 12:45, 40 GB)"
+      availability: "Mac M5 Max (Pull 93% 2026-04-21T13:15, 40 GB)"
       fallback_on_unreachable: "gemini-2.5-pro"
+      tunnel_required: true
+
+  - model_name: qwen25-72b-local
+    litellm_params:
+      model: ollama/qwen2.5:72b-instruct-q4_0
+      api_base: http://localhost:11434
+    model_info:
+      tier: local-inference
+      use_cases: ["multilingual", "chinese-german", "long-context-reasoning", "structured-output"]
+      cost_per_call: 0
+      availability: "Mac M5 Max (Pull 3% 2026-04-21T13:15, ~45 GB)"
+      fallback_on_unreachable: "gemini-2.5-pro"
+      tunnel_required: true
+
+  - model_name: mistral-7b-local
+    litellm_params:
+      model: ollama/mistral:7b-instruct-v0.3-q4_0
+      api_base: http://localhost:11434
+    model_info:
+      tier: local-inference
+      use_cases: ["fast-classification", "lightweight-routing", "batch-triage"]
+      cost_per_call: 0
+      latency_seconds_expected: 0.5-1
+      availability: "Mac M5 Max (Pull 28% 2026-04-21T13:15, ~4 GB)"
+      fallback_on_unreachable: "gemma2-27b-local"
+      tunnel_required: true
 
   - model_name: mxbai-embed-local
     litellm_params:
       model: ollama/mxbai-embed-large
-      api_base: http://192.168.1.140:11434
+      api_base: http://localhost:11434
     model_info:
       tier: local-inference
       use_cases: ["embedding", "rag-vector-generation"]
       cost_per_call: 0
-      availability: "Mac M5 Max (LIVE 2026-04-21)"
+      availability: "Mac M5 Max LIVE (via SSH-Tunnel)"
+      tunnel_required: true
 
 # ========== ROUTER SETTINGS ==========
 # LiteLLM-Router kennt nur Standard-Strategies. Custom Kemmer-Criticality-Logic
