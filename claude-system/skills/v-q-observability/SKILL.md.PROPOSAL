@@ -1,0 +1,196 @@
+---
+name: v-q-observability
+description: V(q)-Observability-Dashboard fuer SAE v8 Governance-Tier. Zeigt Lyapunov-Potential-Verlauf pro Agent/Slot/Hotel. Triggers "v(q) status", "vq check", "governance q-verlauf", "q-historie", automatisch bei Governance-Tier-Anomalien (q jenseits [-2, +2])
+crux-mk: true
+status: PROPOSAL (wartet auf Martin-Approval)
+version: 0.1.0
+created: 2026-04-18
+author: Opus 4.7 (1M) Work-C2 B81-Subagent
+blueprint-id: B81
+decision-card: docs/decision-cards/B81-V-q-Observability-Dashboard-HARDENED-Promotion.md
+fragments: F277 (V(q) konvex), F278 (LaSalle), F274 (HIVE-Score)
+---
+
+# Skill: v-q-observability (PROPOSAL) [CRUX-MK]
+
+## Status
+
+**PROPOSAL.** Diese Datei endet auf `.PROPOSAL`. Wird erst zu `SKILL.md` umbenannt nach:
+1. Martin-Approval
+2. Implementation `sae-v8/core/observability/v_q_dashboard.py` abgeschlossen (Copilot-Agent-Task)
+3. Unit-Tests gruen (tests/test_observability/test_v_q_dashboard.py)
+
+## Was dieser Skill tut
+
+Zeigt Martin und Admin-Rollen den V(q)-Verlauf pro Agent/Slot/Hotel in SAE v8. Basiert auf:
+- **F277**: `V(q) = (k/2) * q^2 + beta * (exp(-q) + q - 1)` (globales konvexes Potential)
+- **F278**: LaSalle-Beweis dass `q(t) -> 0` asymptotisch (wenn System stabil ist)
+
+## Triggers
+
+### Direkte Triggers (Nutzer-initiiert)
+
+- "v(q) status" -> Gesamt-Dashboard fuer alle 7 Hotels
+- "vq check" -> Kurz-Ansicht mit Top-5-Agenten-Anomalien
+- "vq check hotel <hotel_id>" -> Hotel-spezifische Ansicht
+- "governance q-verlauf <agent_id>" -> Einzel-Agent-Timeline
+- "q-historie <slot_id>" -> Slot-basierter Trinity-Vergleich (3 Varianten)
+
+### Indirekte Triggers (automatisch)
+
+- **ALERT_CRIT**: `|q| > 2.0` (coding.md §4 Invariante 1 verletzt) -> automatische Dashboard-Aktivierung
+- **ALERT_WARN**: `V(q) > V_q_threshold_warn` -> Dashboard + Bulletin-Eintrag
+- **ALERT_DRIFT**: `std(q, last_20) > 2.0 sigma` -> Dashboard + Drift-Report
+
+## Workflow
+
+### Mode 1: Status-Abfrage (Nutzer-initiiert, Read-Only)
+
+```
+1. User: "v(q) status"
+2. Skill liest MetricStore (in-memory Ringbuffer, 100 Zyklen)
+3. Aggregation pro Hotel: q-Heatmap (Agenten x Zeit)
+4. HIVE-Score-Ueberlay (F274) pro Hotel
+5. Output: Dashboard-JSON (oder Plotly-HTML, oder 9OS-GUI-Render)
+```
+
+### Mode 2: Drill-Down (Nutzer-interaktiv)
+
+```
+1. User: "governance q-verlauf <agent_id>"
+2. Skill zieht vollstaendige Timeline (100 Zyklen aus Ringbuffer, laenger aus EventStore)
+3. Berechnung: V(q)-Kurve, p-Kurve, T_max-Verlauf
+4. Anomalie-Markierungen: ALERT_CRIT/WARN/DRIFT im Verlauf
+5. LaSalle-Konvergenz-Check: erreicht q->0? Zeitkonstante?
+```
+
+### Mode 3: Anomalie-Alert (automatisch, Push)
+
+```
+1. AnomalyDetector detektiert |q| > 2.0 bei agent_id
+2. Skill aktiviert automatisch
+3. Dashboard-Snapshot + BEACON-Update + Bulletin-Eintrag
+4. Eskalation: wenn >3 Agenten gleichzeitig alert -> Martin-Push-Benachrichtigung
+```
+
+### Mode 4: Shadow-Mode-Wargame-Validierung
+
+```
+1. Wargame schlaegt q-Manipulation vor (z.B. "was passiert wenn agent X q=1.8 hat?")
+2. Skill laeuft im Shadow-Mode:
+   - Kopie des MetricStore
+   - Simuliere q=1.8 fuer agent X
+   - Render Dashboard mit simuliertem Wert
+   - Erkennbar: ALERT_WARN, V(q) springt auf <berechneter Wert>
+3. Output: Visuelle Validierung des Wargame-Szenarios
+4. KEINE Live-Aenderung am echten Store
+```
+
+## Input-Schema
+
+```yaml
+mode: status | drill-down | alert | shadow
+target: all | hotel:<id> | agent:<id> | slot:<id>  # Scope
+window: int (default 100)  # Ringbuffer-Zyklen
+filters:
+  - anomaly_only: bool (default false)
+  - drift_only: bool (default false)
+  - hotel_filter: [list of hotel_ids]
+output_format: json | html | text-summary
+```
+
+## Output-Schema
+
+```yaml
+mode: <echo>
+timestamp: <ISO>
+scope: <target>
+anomalies:
+  - agent_id: <id>
+    alert_type: CRIT | WARN | DRIFT
+    q_value: <float>
+    V_q_value: <float>
+    since_cycles: <int>
+metrics:
+  - agent_id: <id>
+    q_series: [<float>, ...]   # 100 Werte
+    V_q_series: [<float>, ...]
+    p_series: [<float>, ...]
+    T_max_series: [<int>, ...]
+hive_overlay:
+  - hotel_id: <id>
+    hive_score: <float>
+    shannon_entropy: <float>
+    agent_class_distribution: {<class>: <count>, ...}
+rendering:
+  - format: <echo>
+  - content: <string: html or json>
+```
+
+## Pre-Conditions
+
+1. SAE v8 `core.observability.v_q_dashboard` Modul existiert und ist importierbar
+2. MetricStore ist initialisiert (beim SAE-System-Start)
+3. GovernanceOscillator emittiert Metriken pro Zyklus
+4. `observability.v_q_dashboard.enabled = True` (Feature-Flag, default False)
+
+## Post-Conditions
+
+1. KEIN Write-Zugriff auf `state.q`, `state._q` oder GovernanceOscillator (Read-Only)
+2. Dashboard-Output verfuegbar in spezifiziertem Format
+3. Bei Anomalien: Bulletin-Eintrag geschrieben (`branch-hub/BULLETIN.md` append)
+4. Bei CRIT-Alerts: Action-Log-Eintrag in `audit/action-log.jsonl`
+
+## Abhaengigkeiten
+
+- `core.governance.GovernanceOscillator` (F277 V(q)-Berechnung)
+- `core.hive.HIVEScorer` (F274 Shannon-Entropy-Ueberlay)
+- `core.eventstore.EventStore` (Langzeit-Persistenz, optional)
+- `observability.v_q_dashboard.MetricStore` (NEU zu bauen)
+- `observability.v_q_dashboard.AnomalyDetector` (NEU zu bauen)
+- `observability.v_q_dashboard.Dashboard` (NEU zu bauen)
+
+## Implementation-Plan (fuer Copilot-Agent)
+
+1. **Phase 0 (Stub):** `sae-v8/core/observability/v_q_dashboard.py` mit Docstrings + TODO-Liste (erledigt via B81-Stub-Datei)
+2. **Phase 1 (MetricStore):** In-memory Ringbuffer mit `collections.deque(maxlen=100)`
+3. **Phase 2 (AnomalyDetector):** 3-Tier-Alerts mit konfigurierbaren Thresholds
+4. **Phase 3 (Dashboard-API):** Pull-basierte API, Plotly-Rendering optional
+5. **Phase 4 (HIVE-Integration):** F274-Scoring als Ueberlay
+6. **Phase 5 (Tests):** `tests/test_observability/` mit Unit-Tests + Integration
+7. **Phase 6 (Feature-Flag):** `observability.v_q_dashboard.enabled` in Config
+8. **Phase 7 (Dokumentation):** README + Decision-Card-Referenz
+
+## Approval-Pfad
+
+1. Martin liest: `docs/decision-cards/B81-V-q-Observability-Dashboard-HARDENED-Promotion.md`
+2. Martin entscheidet: Approve / Reject / Conditional
+3. Bei Approve: Dieser Skill wird umbenannt `SKILL.md.PROPOSAL -> SKILL.md`
+4. Copilot-Agent-Task wird ausgeloest (Stub-Datei in `instance-c2/code-stubs/` als Basis)
+5. Nach Implementation + Tests: Skill aktiv
+
+## CRUX-Bindung (zusammengefasst)
+
+- **K_0:** geschuetzt (Observability verhindert Governance-Ausfall-Kaskade)
+- **Q_0:** erhoeht (LaSalle-Konvergenz wird operationell pruefbar)
+- **I_min:** erhoeht (strukturierte Metrik-Pipeline statt ad-hoc-Debug)
+- **W_0:** positiv (Setup-Cost < Langzeit-Effizienz-Gewinn)
+- **rho:** +80-180k EUR/J (direkt, konservativ)
+
+## Anti-Patterns (nicht tun)
+
+- Write-Zugriff auf q-Werte (nur lesen, Property-Guard coding.md §6)
+- Alle 600 Agenten gleichzeitig rendern (Browser-Overload; Aggregation-First)
+- Default-Schwellen ohne Kalibrierung uebernehmen (Shadow-Mode 2 Wochen zuerst)
+- sigma_threshold = 1.0 (Alert-Fatigue, default = 2.0)
+- Ohne Feature-Flag deployen (coding.md §4 Invariante 7)
+
+## Referenzen
+
+- Decision-Card: `Claude-Vault/docs/decision-cards/B81-V-q-Observability-Dashboard-HARDENED-Promotion.md`
+- Stub-Datei: `Claude-Vault/areas/family/instance-c2/code-stubs/v_q_dashboard_stub.py`
+- Fragments: F277 + F278 in `Subnautica-Fragment-Map-Ergaenzung-O-Welle-9.md`
+- Rules: `coding.md` §4 (Invariante 1), §6 (Property-Guard), §10 (Q_SCALE_INTEGRAL)
+- Rules: `sae-security.md` §5 (BoundedVeto), §6 (Monitoring)
+
+[CRUX-MK]

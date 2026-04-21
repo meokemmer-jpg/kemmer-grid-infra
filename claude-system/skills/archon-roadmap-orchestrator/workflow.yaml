@@ -1,0 +1,121 @@
+name: roadmap-orchestrate-v2
+budget_total_tokens: 50000
+budget_eur: 2.0
+triggers:
+  - manual
+  - "event:task-created"
+  - "event:conflict-detected"
+  - "event:budget-breach"
+  - "event:sla-breach"
+debounce_min: 30
+version: "2.0.0"
+origin: "opus-4.7-METADD 2026-04-18 (Gemini-drafted, Claude-integrated)"
+meta_ebene: E3
+
+nodes:
+  - id: token-guard-init
+    type: bash
+    depends_on: []
+    script: |
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/token_guard.py --init --workflow roadmap-orchestrate-v2
+    timeout_sec: 15
+    output_artifacts: ["token_budget.json"]
+
+  - id: event-ingest
+    type: bash
+    depends_on: ["token-guard-init"]
+    script: |
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/ttl_lease_manager.py sweep
+    timeout_sec: 60
+    output_artifacts: ["raw_events.json"]
+
+  - id: crux-gate
+    type: bash
+    depends_on: ["event-ingest"]
+    script: |
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/global_optima_check.py
+    timeout_sec: 45
+
+  - id: state-rebuild
+    type: bash
+    depends_on: ["crux-gate"]
+    script: |
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/collect_roadmap_state.py
+    timeout_sec: 90
+    output_artifacts: ["materialized.json"]
+
+  - id: detect-conflicts
+    type: bash
+    depends_on: ["state-rebuild"]
+    script: |
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/detect_roadmap_conflicts.py
+    timeout_sec: 60
+    output_artifacts: ["conflicts.json"]
+
+  - id: semantic-dedupe
+    type: bash
+    depends_on: ["state-rebuild"]
+    script: |
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/semantic_fingerprint_dedup.py --threshold 0.7
+    timeout_sec: 120
+    output_artifacts: ["dedupe_results.json"]
+
+  - id: uncertainty-gate
+    type: claude
+    depends_on: ["detect-conflicts", "semantic-dedupe"]
+    model: haiku
+    session: fresh
+    prompt: |
+      Review roadmap conflicts and dedupe results:
+      Conflicts: {{artifacts.detect-conflicts.conflicts.json}}
+      Dedupe: {{artifacts.semantic-dedupe.dedupe_results.json}}
+
+      Decide if escalation to Martin is required.
+      Escalate if: >5 conflicts OR any high-severity conflict OR any dedup-merge with similarity >= 0.9 AND different branches.
+      Output ONLY a JSON: {"escalate": bool, "reason": "string", "severity": "low|mid|high"}
+    budget_tokens: 2000
+    timeout_sec: 30
+
+  - id: priorize-tasks
+    type: claude
+    depends_on: ["uncertainty-gate"]
+    model: sonnet
+    session: continue-with-cache
+    prompt: |
+      Analyze current ROADMAP state: {{artifacts.state-rebuild.materialized.json}}
+      Rank all OFFEN tasks by rho/Effort using Kemmer-Formula: rho = CM * Lambda - OPEX - h*Lambda*W
+      Load CM_base, h_opportunity, Lambda_typical from: {{file:C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/global-optima.json}}
+      Output prioritized JSON list with top 10 tasks {task_id, priority, rho_est, effort_est, recommended_branch, recommended_model, justification}
+    budget_tokens: 8000
+    timeout_sec: 90
+
+  - id: web-enrichment
+    type: bash
+    depends_on: ["priorize-tasks"]
+    script: |
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/web_enrichment.py --queries-json pending_research.json || echo "web-enrichment skipped (optional)"
+    timeout_sec: 180
+    optional: true
+
+  - id: route-and-assign
+    type: bash
+    depends_on: ["priorize-tasks"]
+    script: |
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/model_router.py --task-type priorization --context-tokens 50000
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/write_inbox_assignments.py --assignments-json assignments.json
+    timeout_sec: 60
+
+  - id: token-guard-final
+    type: bash
+    depends_on: ["route-and-assign"]
+    script: |
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/token_guard.py --finalize --workflow roadmap-orchestrate-v2
+    timeout_sec: 15
+
+  - id: write-finding
+    type: bash
+    depends_on: ["token-guard-final"]
+    script: |
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/write_roadmap_finding.py
+    timeout_sec: 30
+    output_artifacts: ["finding.md"]

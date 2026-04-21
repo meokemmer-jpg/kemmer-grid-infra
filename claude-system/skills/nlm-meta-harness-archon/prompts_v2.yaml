@@ -1,0 +1,116 @@
+# NLM-Meta-Harness-Archon v2 — 12 Themen, rho-gewichtet, agil erweiterbar
+# Gemini/Codex crafted pro Run die konkreten Prompts (diese YAML liefert nur Themen-Metadata)
+# State-File haelt shannon_history + child_themes + rho_estimate
+
+themes:
+  coding:
+    label: "Coding & Software-Architektur"
+    rho: 0.85
+    lambda: 5.0
+    stop_bit: 0.5
+    seed_queries:
+      - "Welche Coding-Pattern ist in diesem Notebook dokumentiert das NICHT in Standard-SWE-Buechern steht? Trinity-Pattern, Myzel, Shannon-HIVE oder anderes."
+      - "Wie implementiert man das Kemmer-SAE-Muster in Produktion (600 Agenten, Feature-Flags, Shadow-Mode)? Konkrete Code-Skizze."
+
+  ai_engineering:
+    label: "KI & LLM-Engineering"
+    rho: 0.95
+    lambda: 5.0
+    stop_bit: 0.5
+    seed_queries:
+      - "Welches AI-Engineering-Prinzip aus diesem Notebook wird in OpenAI/Anthropic-Publikationen uebersehen?"
+      - "Trinity + Bounded-Veto + COSMOS vs. RLHF + Constitutional AI: Wo ist der Kemmer-Ansatz robuster/schwaecher?"
+
+  documentation:
+    label: "Dokumentation & Technical Writing"
+    rho: 0.50
+    lambda: 3.0
+    stop_bit: 0.5
+    seed_queries:
+      - "Welche Doku-Struktur (Runbook/Decision-Card/Spec) ist fuer Kemmer-Systeme optimal?"
+      - "Was unterscheidet eine Kaestner-Doku von einer LLM-generierten Standard-Doku?"
+
+  mathematics:
+    label: "Mathematik, Formeln, Beweise"
+    rho: 0.80
+    lambda: 3.0
+    stop_bit: 0.5
+    seed_queries:
+      - "Welche mathematische Herleitung (Hamilton, Shannon, TOC, Pontryagin) ist im Kemmer-System kritisch?"
+      - "Zeige Beweisskizze zu rho(a) = CM*Lambda - OPEX - h*Lambda*W mit realistischen Parametern."
+
+  game_theory:
+    label: "Spieltheorie & Strategische Interaktion"
+    rho: 0.75
+    lambda: 2.0
+    stop_bit: 0.5
+    seed_queries:
+      - "Welche spieltheoretischen Gleichgewichte gelten fuer Mehr-Agenten-SAE-Systeme?"
+      - "Clausewitz vs Moltke vs Sun-Tzu: welches Rahmenwerk dominiert Kemmer-Doktrin in welcher Situation?"
+
+  bwl_finance:
+    label: "BWL & Finance"
+    rho: 0.90
+    lambda: 5.0
+    stop_bit: 0.5
+    seed_queries:
+      - "Welche Finance-Hebel sind in diesem Notebook mit rho-Quantifizierung belegt?"
+      - "KPM-Portfolio-Motor: welche Wealth-Transfer-Pfade optimieren rho bei h=0.08/Jahr?"
+
+  vwl_makro:
+    label: "VWL & Makrooekonomie"
+    rho: 0.70
+    lambda: 2.0
+    stop_bit: 0.5
+    seed_queries:
+      - "Wie beeinflussen EZB-/Fed-Entscheidungen rho der Kemmer-Hotels + 9dots + Graphity?"
+      - "AI-driven Deflation vs Lohn-Preis-Spirale: welches Szenario ist fuer 2026-2030 CRUX-kritisch?"
+
+  knowledge_management:
+    label: "Wissensmanagement & Lernen"
+    rho: 0.80
+    lambda: 5.0
+    stop_bit: 0.5
+    seed_queries:
+      - "Welche KB-Hygiene-Regel in diesem Notebook verhindert Doku-Vergiftung (SUPERSEDED, 30-Tage-Frist)?"
+      - "Vault-CLAUDE-Multi-Branch: wie koordinieren N parallele Claude-Instanzen lossless?"
+
+  meta_learning:
+    label: "Meta-Lernen & Selbst-Lernen"
+    rho: 0.90
+    lambda: 5.0
+    stop_bit: 0.5
+    seed_queries:
+      - "Welche Meta-Lern-Regel der 5 Ordnungen (E1-E5) ist hier am wichtigsten?"
+      - "Cross-LLM-Pflicht E3+: Wann gilt CROSS-LLM-SIMULATION-HARDENED vs. HARDENED?"
+
+  biological_learning:
+    label: "Biologisches Lernen & Neuroplastizitaet"
+    rho: 0.60
+    lambda: 2.0
+    stop_bit: 0.5
+    seed_queries:
+      - "Wie koennen Neuroplastizitaets-Prinzipien Martin's persoenliche rho(t) steigern (Schlaf, Mindfulness)?"
+      - "Welche Biologie-zu-AI-Isomorphien (Myzel, Schwarm, Immunsystem) sind im SAE belegt?"
+
+  civilizational_learning:
+    label: "Zivilisatorisches Lernen & Governance"
+    rho: 0.70
+    lambda: 2.0
+    stop_bit: 0.5
+    seed_queries:
+      - "Welche Governance-Fehler historischer Zivilisationen wiederholt die AI-Branche 2024-2026?"
+      - "MHC + COSMOS + Bounded-Veto: wie scaled das auf 1000+ Agent-Systeme?"
+
+  autonomous_organizations:
+    label: "Dark Factories & Autonome Organisationen"
+    rho: 0.95
+    lambda: 5.0
+    stop_bit: 0.5
+    seed_queries:
+      - "Welche Dark-Factory-Architektur-Entscheidung aus diesem Notebook ist fuer Level-5-Autonomie kritisch?"
+      - "DF-01 bis DF-06: Welche naechsten 4 DFs maximieren rho bei minimalem W?"
+
+# Auto-Extension: wird per weekly_meta_loop.py angehaengt:
+# emerging_themes: [...]
+# fade_themes: [...]

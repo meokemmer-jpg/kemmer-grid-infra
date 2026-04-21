@@ -1,0 +1,42 @@
+# OS + Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Secrets (NEVER commit)
+.env
+.env.local
+*.key
+*.pem
+settings.local.json
+
+# Runtime / Logs
+*.log
+*.log.*
+.claude/logs/
+~/.kemmer-grid/
+
+# State-Files mit potenziell sensitiven Daten
+state-attestation.json
+attestations/*.json
+!attestations/.gitkeep
+grid-doctor-report.json
+
+# Machine-specific
+*.local.yaml

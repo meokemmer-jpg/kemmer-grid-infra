@@ -1,0 +1,66 @@
+id: cross-llm-adversarial
+version: 1.0
+crux_mk: true
+subagent_type: general-purpose
+description: Cross-LLM Adversarial-Run (Codex+Gemini+Grok Konvergenz-Test) fuer Claim-Haertung
+
+required_params:
+  - claim_text            # Die zu testende Aussage
+  - claim_type            # empirical | logical | axiomatic (G6 Claim-Type-System)
+  - meta_ebene            # E1|E2|E3|E4|E5
+  - context_snippet       # 2-5 Saetze Rahmen
+  - expected_verdict      # erwartete Konvergenz
+
+optional_params:
+  - additional_llms: []   # z.B. ["copilot"]
+  - max_tokens_per_llm: 2500
+  - parallel: true
+
+prompt_skeleton: |
+  <ROLLE>: Cross-LLM-Adversarial-Orchestrator [CRUX-MK].
+
+  <KONTEXT>: Claim-Haertung auf Meta-Ebene {meta_ebene} unter Kemmer-Meta-Lern-Kristall.
+  Meta-Governance-Framework G1-G14 (rules/meta-governance-framework.md).
+  Cross-LLM-Pflicht fuer E3+-Claims (rules/cross-llm-pflicht-e3-plus.md).
+
+  <CLAIM>:
+    Typ: {claim_type}
+    Ebene: {meta_ebene}
+    Text: "{claim_text}"
+    Kontext: "{context_snippet}"
+    Erwartete-Verdict: {expected_verdict}
+
+  <AUFTRAG>: Parallel 3-LLM-Burst (Codex gpt-5.4 + Gemini 2.5 Pro + Grok-4.20-reasoning):
+  1. Jeder LLM adversarial+unabhaengig (keine Claude-Prompting-Drift)
+  2. Jeder LLM liefert: ADOPT / MODIFY / REJECT + 3 Staerkste Gegenargumente + Falsifikations-Bedingung
+  3. Ergebnisse in branch-hub/cross-llm/{datum}-<claim-slug>.md persistieren
+  4. Konvergenz-Matrix: 3/3 ADOPT → CROSS-LLM-2OF3-HARDENED max (wenn G1-G12 erfuellt)
+  5. Divergenz-Analyse wenn ≠3/3: welche Modelle widersprechen, warum
+
+  <PFLICHT-FELDER>:
+    - run_id (unique)
+    - timestamp_start + timestamp_end
+    - llm_verdicts: {codex, gemini, grok} je mit {verdict, rationale, falsif_cond}
+    - convergence_verdict: "3/3 ADOPT" | "2/3 ADOPT" | "divergent" | "3/3 REJECT"
+    - g1_g12_satisfied: bool
+    - g3_2_divergence_proxies_count: int (min 3 noetig fuer HARDENED-Anspruch)
+    - recommended_canon_verdict: z.B. "CROSS-LLM-2OF3-HARDENED"
+
+  <BUDGET>: max 30 Min, max 3 parallele LLM-Calls, Deutsch kompakt.
+  <MELDE AM ENDE>:
+    File-Pfad: branch-hub/cross-llm/{datum}-<slug>.md
+    Verdict: <convergence>
+    G-Filter-Status: G1-G12 pass/fail
+    Proxy-Count: X/7
+
+expected_output_structure:
+  - Cross-LLM-Datei in branch-hub/cross-llm/
+  - Frontmatter: verdict + llm_models + meta_ebene
+  - Konvergenz-Matrix als Table
+  - Pro-LLM: Verdict + Rationale + Gegenargumente + Falsifikations-Bedingung
+
+feedback_config:
+  quality_score_method: rho_gain_estimated
+  min_quality_threshold: 0.75
+  reviewers: [claude_opus_post_dispatch]
+  review_deadline_hours: 24

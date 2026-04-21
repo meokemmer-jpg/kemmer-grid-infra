@@ -1,0 +1,68 @@
+name: {{WORKFLOW_NAME}}
+description: |
+  Use when: Session-Ende oder strukturierte Lern-Reflexion fuer {{DOMAIN}}.
+  Triggers: "{{TRIGGERS}}"
+  Does: 5+1 Pruef-Fragen + Skill-from-Learning Check (meta-harness 8a).
+  Output: branch-hub/knowledge-diffs/knowledge-diff-{{DOMAIN}}-<date>.md
+
+  [CRUX-MK] Mandatory per rules/session-handoff.md.
+
+provider: claude
+model: sonnet
+
+nodes:
+  - id: crux-gate
+    bash: |
+      python "G:/Meine Ablage/Claude-Knowledge-System/branch-hub/.archon/scripts/crux-validate.py" \
+        --thesis "$ARGUMENTS" --artifacts "$ARTIFACTS_DIR"
+
+  - id: session-context
+    depends_on: [crux-gate]
+    prompt: |
+      Extrahiere Session-Aktivitaet fuer Branch $ARGUMENTS.
+      Read: branch-hub/BEACON.md + audit/action-log.jsonl (letzte 50 Zeilen).
+      Write $ARTIFACTS_DIR/session-log.json:
+      {"branch":"","files_touched":[],"decisions":[],"skills_invoked":[],"duration_est":""}
+    allowed_tools: [Read, Glob, Grep, Bash]
+
+  - id: pruef-fragen
+    depends_on: [session-context]
+    prompt: |
+      5+1 Pruef-Fragen (rules/meta-harness.md):
+      1. Was weiss ich das kein anderer Branch weiss?
+      2. Was hat mich ueberrascht?
+      3. Welche Entscheidungen betreffen andere Branches?
+      4. Was muss die naechste Session WISSEN?
+      5. Was wuerde ich anders machen?
+      6. [Meta-Harness 8a] Kann ich einen Skill machen?
+
+      Read: $ARTIFACTS_DIR/session-log.json
+      Ehrliche Antworten, keine Halluzination.
+      Write: $ARTIFACTS_DIR/pruef-antworten.md mit [CRUX-MK] Header.
+    allowed_tools: [Read, Write]
+
+  - id: skill-from-learning
+    depends_on: [pruef-fragen]
+    prompt: |
+      Ja/Nein: Skill erzeugen?
+      Read: $ARTIFACTS_DIR/pruef-antworten.md
+      Wenn JA -> Skill-Draft. Wenn NEIN -> kurze Begruendung.
+      Write: $ARTIFACTS_DIR/skill-draft.md
+    allowed_tools: [Read, Write]
+
+  - id: write-knowledge-diff
+    depends_on: [skill-from-learning]
+    bash: |
+      DATE=$(date -Iseconds | cut -d'T' -f1)
+      BRANCH="${ARGUMENTS:-{{DOMAIN}}}"
+      TARGET="G:/Meine Ablage/Claude-Knowledge-System/branch-hub/knowledge-diffs/knowledge-diff-${BRANCH}-${DATE}.md"
+      {
+        echo "# KNOWLEDGE-DIFF: ${BRANCH} ${DATE} [CRUX-MK]"
+        echo ""
+        cat "$ARTIFACTS_DIR/pruef-antworten.md"
+        echo ""
+        echo "## Skill-from-Learning Entscheidung"
+        cat "$ARTIFACTS_DIR/skill-draft.md"
+      } > "$TARGET"
+      echo "{\"ts\":\"$(date -Iseconds)\",\"branch\":\"archon-{{WORKFLOW_NAME}}\",\"action\":\"WRITE\",\"target\":\"$TARGET\",\"reason\":\"archon-workflow:{{WORKFLOW_NAME}}\",\"source\":\"archon\"}" >> "G:/Meine Ablage/Claude-Knowledge-System/branch-hub/audit/action-log.jsonl"
+      echo "WROTE: $TARGET"

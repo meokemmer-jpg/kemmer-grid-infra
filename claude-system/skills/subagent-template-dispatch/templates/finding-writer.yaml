@@ -1,0 +1,87 @@
+id: finding-writer
+version: 1.0
+crux_mk: true
+subagent_type: general-purpose
+description: Schreibt Finding in branch-hub/findings/ mit Standard-Frontmatter + Kaestner-Ton
+
+required_params:
+  - finding_id            # z.B. "FINDING-GAP-X-YYYY-MM-DD"
+  - finding_title         # Titel-Zeile
+  - branch                # Quell-Branch: MYZ, METAOPS, METAD2, Work-C1, etc.
+  - meta_ebene            # E1|E2|E3|E4|E5
+  - scope_summary         # 1-2 Saetze Scope
+  - evidence_list         # Bulletpoint-Liste Belegen
+  - rho_impact_eur_per_year   # z.B. "50-150k"
+
+optional_params:
+  - supersedes_finding_id: null
+  - cross_llm_file: null     # Pfad falls Cross-LLM validiert
+  - decision_card_id: null
+  - target_line_count: 300
+
+prompt_skeleton: |
+  <ROLLE>: Finding-Writer-Subagent [CRUX-MK].
+
+  <KONTEXT>: branch-hub/findings/ Standard-Format. Kaestner-Ton. Knapp + Praezise.
+  Rules: rules/cross-llm-pflicht-e3-plus.md bei meta_ebene >= E3 (Cross-LLM erforderlich).
+
+  <AUFTRAG>: Schreibe Finding {finding_id} "{finding_title}" nach Schema:
+
+  ```markdown
+  ---
+  id: {finding_id}
+  type: finding
+  branch: {branch}
+  date: YYYY-MM-DD
+  status: ACTIVE
+  meta-ebene: {meta_ebene}
+  crux-mk: true
+  aktiviert: YYYY-MM-DD
+  rho-impact-eur-per-year: {rho_impact_eur_per_year}
+  supersedes: {supersedes_finding_id}
+  cross-llm-file: {cross_llm_file}
+  decision-card: {decision_card_id}
+  ---
+
+  # {finding_title} [CRUX-MK]
+
+  ## Executive-Summary
+  ## Kern-These
+  ## Evidence
+  ## rho-Quantifizierung
+  ## Shadow→Live-Protokoll (falls applicable)
+  ## Falsifikations-Bedingungen
+  ## Promotion-Pfad
+  ## CRUX-Bindung
+  ## Events + Action-Log
+
+  [CRUX-MK]
+  ```
+
+  Scope: {scope_summary}
+  Evidence: {evidence_list}
+  Zielumfang: ~{target_line_count} Zeilen.
+
+  <PFLICHT-FELDER>:
+    - Frontmatter komplett
+    - Executive-Summary max 3 Absaetze
+    - Mindestens 3 Evidence-Punkte mit Quellen
+    - Falsifikations-Bedingung konkret (nicht "wenn nicht mehr funktioniert")
+    - rho-Quantifizierung mit Rechnung (nicht nur Gesamt-EUR)
+
+  <BUDGET>: max 1h, max 30 Reads, Kaestner-Ton.
+  <MELDE AM ENDE>:
+    File-Pfad: branch-hub/findings/{finding_id}.md
+    Zeilen-Count: N
+    Frontmatter-Fields-Count: N
+    Evidence-Points: N
+
+expected_output_structure:
+  - File in branch-hub/findings/
+  - Frontmatter vollstaendig (min 10 Felder)
+  - Target-Lines ±10%
+  - Executive-Summary + Evidence + rho + Falsif
+
+feedback_config:
+  quality_score_method: rho_gain_estimated
+  min_quality_threshold: 0.7

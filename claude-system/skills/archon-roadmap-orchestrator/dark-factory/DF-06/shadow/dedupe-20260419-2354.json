@@ -1,0 +1,221 @@
+﻿{
+  "pairs": [
+    {
+      "task_a": "M1",
+      "task_b": "M1b",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1",
+      "task_b": "O1a",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1",
+      "task_b": "O2",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1",
+      "task_b": "O4",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1",
+      "task_b": "M2",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1",
+      "task_b": "M3",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1",
+      "task_b": "M4",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1",
+      "task_b": "M5",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1b",
+      "task_b": "O1a",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1b",
+      "task_b": "O2",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1b",
+      "task_b": "O4",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1b",
+      "task_b": "M2",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1b",
+      "task_b": "M3",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1b",
+      "task_b": "M4",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M1b",
+      "task_b": "M5",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O1a",
+      "task_b": "O2",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O1a",
+      "task_b": "O4",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O1a",
+      "task_b": "M2",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O1a",
+      "task_b": "M3",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O1a",
+      "task_b": "M4",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O1a",
+      "task_b": "M5",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O2",
+      "task_b": "O4",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O2",
+      "task_b": "M2",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O2",
+      "task_b": "M3",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O2",
+      "task_b": "M4",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O2",
+      "task_b": "M5",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O4",
+      "task_b": "M2",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O4",
+      "task_b": "M3",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O4",
+      "task_b": "M4",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "O4",
+      "task_b": "M5",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M2",
+      "task_b": "M3",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M2",
+      "task_b": "M4",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M2",
+      "task_b": "M5",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M3",
+      "task_b": "M4",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M3",
+      "task_b": "M5",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    },
+    {
+      "task_a": "M4",
+      "task_b": "M5",
+      "similarity": 1.0,
+      "recommend_action": "merge"
+    }
+  ]
+}
+

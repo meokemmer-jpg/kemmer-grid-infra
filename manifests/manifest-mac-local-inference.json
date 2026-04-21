@@ -1,0 +1,63 @@
+{
+  "role": "local-inference",
+  "version": "v0.1.0",
+  "description": "Mac M5 Max Local-Inference-Node. Ollama mit Gemma2-27B als LAN-Endpoint. Tier-3-LLM-Tier. Entlastet Cloud-APIs fuer Routine-Tasks.",
+  "platform": "macos",
+  "required_clis": [
+    {"name": "brew", "install_cmd": "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"", "assert_cmd": "brew --version"},
+    {"name": "xcode-select", "install_cmd": "xcode-select --install", "assert_cmd": "xcode-select -p"},
+    {"name": "python3", "min_version": "3.12.0", "install_brew": "python@3.12", "assert_cmd": "python3 --version"},
+    {"name": "node", "min_version": "20.0.0", "install_brew": "node@20", "assert_cmd": "node --version"},
+    {"name": "git", "min_version": "2.40.0", "install_brew": "git", "assert_cmd": "git --version"},
+    {"name": "gh", "min_version": "2.40.0", "install_brew": "gh", "assert_cmd": "gh --version"},
+    {"name": "ollama", "min_version": "0.3.0", "install_brew": "ollama", "assert_cmd": "ollama --version", "critical": true},
+    {"name": "claude", "min_version": "2.0.0", "install_npm": "@anthropic-ai/claude-code", "assert_cmd": "claude --version"},
+    {"name": "gemini", "min_version": "0.38.0", "install_npm": "@google/gemini-cli", "assert_cmd": "gemini --version", "optional": true},
+    {"name": "codex", "min_version": "0.118.0", "install_npm": "@openai/codex", "assert_cmd": "codex --version", "optional": true}
+  ],
+  "ollama_models": [
+    {"name": "gemma2:27b", "size_gb": 16, "pull_cmd": "ollama pull gemma2:27b", "primary": true, "role": "local-routine-inference"},
+    {"name": "mxbai-embed-large", "size_gb": 0.7, "pull_cmd": "ollama pull mxbai-embed-large", "role": "embedding"},
+    {"name": "llama3.3:70b-instruct-q4_K_M", "size_gb": 40, "pull_cmd": "ollama pull llama3.3:70b-instruct-q4_K_M", "optional": true, "role": "upgrade-path"}
+  ],
+  "ollama_config": {
+    "host": "0.0.0.0:11434",
+    "keep_alive": "2h",
+    "lan_exposed": true,
+    "firewall_allow_lan": true
+  },
+  "required_env_vars": [
+    {"name": "MACHINE_ROLE", "required_value": "LOCAL-INFERENCE"},
+    {"name": "MACHINE_ID", "required_value": "MAC-M5-01"},
+    {"name": "GEMINI_API_KEY", "required": true, "sensitive": true},
+    {"name": "XAI_API_KEY", "required": false, "sensitive": true},
+    {"name": "OLLAMA_HOST", "required_value": "0.0.0.0:11434"},
+    {"name": "GRID_MASTER_IP", "required": true, "note": "PC1 LAN-IP, Martin setzt"},
+    {"name": "ENABLE_PROMPT_CACHING_1H", "required_value": "true"}
+  ],
+  "required_rules_count": 40,
+  "required_rules_hash_source": "git@github.com:meokemmer-jpg/kemmer-grid-infra#claude-system/rules/",
+  "scheduled_tasks_required": [
+    {"type": "launchd", "label": "com.kemmer.heartbeat", "interval_seconds": 300, "script": "scripts/heartbeat.sh"},
+    {"type": "launchd", "label": "com.kemmer.ollama-keepalive", "start_at_boot": true, "command": "OLLAMA_KEEP_ALIVE=2h ollama serve"}
+  ],
+  "scheduled_tasks_forbidden": ["com.kemmer.DF-*", "com.kemmer.NLM-*", "com.kemmer.vault-*", "com.kemmer.archon-*"],
+  "nlm_login_allowed": false,
+  "git_push_rights": ["feature/mac-*", "patch/*", "NICHT main"],
+  "network_requirements": {
+    "outbound": ["api.anthropic.com:443", "generativelanguage.googleapis.com:443", "api.github.com:443"],
+    "inbound_lan": {"ollama": 11434}
+  },
+  "lan_endpoint_registration": {
+    "file": "/Volumes/GoogleDrive/Meine Ablage/Claude-Knowledge-System/branch-hub/grid-endpoints.json",
+    "schema_ref": "docs/grid-endpoints-schema.md",
+    "heartbeat_interval_seconds": 300
+  },
+  "performance_gates": {
+    "ollama_gemma27b_tokens_per_sec_min": 40,
+    "ollama_gemma27b_first_token_latency_ms_max": 2000,
+    "lan_round_trip_ms_max": 50
+  },
+  "capability_gate_test_suite": "golden-tasks/golden-task-suite.json",
+  "notes": "Mac ist Phase-3-Node per Masterplan v2. Wird spaeter aktiviert. Wenn aktiv: LAN-Routing-Zentrum fuer Routine-Inferenz, entlastet Cloud-APIs."
+}

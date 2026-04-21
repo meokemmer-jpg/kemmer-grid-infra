@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TTL-Lease",
+  "description": "Time-bounded Lease eines Tasks an einen Branch",
+  "type": "object",
+  "required": ["lease_id", "task_id", "branch", "issued_at", "expires_at", "heartbeat_interval_min"],
+  "properties": {
+    "lease_id": {"type": "string", "pattern": "^lease-[0-9a-f]{12}$"},
+    "task_id": {"type": "string"},
+    "branch": {"type": "string"},
+    "assigned_model": {"type": "string"},
+    "issued_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "heartbeat_interval_min": {"type": "integer", "default": 15},
+    "last_heartbeat_at": {"type": "string", "format": "date-time"},
+    "status": {
+      "type": "string",
+      "enum": ["active", "expired", "released", "renewed"]
+    },
+    "renewal_count": {"type": "integer", "default": 0},
+    "max_renewals": {"type": "integer", "default": 4}
+  }
+}

@@ -1,0 +1,132 @@
+---
+# SUPERSEDED 2026-04-19: 3D-Matrix YAML REJECTED durch Cross-LLM (Codex+Gemini 2/2 REJECT)
+# Nachfolger: cross-reference-index.schema.sql (SQLite + Junction-Tables)
+# Grok-Dissens dokumentiert: YAML bleibt valide fuer <2k Refs (micro/small-book)
+# Dieses File: YAML-AUTHORING-Layer (entities/, edges/, aliases/) → Build-Script konvertiert zu SQLite
+# Cross-LLM-Belegung: branch-hub/cross-llm/2026-04-19-Cross-Reference-Struktur-Wargame.md
+# Siehe auch: branch-hub/cross-llm/2026-04-19-Grok-Dissent-Konsolidierung.md
+
+# Cross-Reference-Index Schema [CRUX-MK]
+# Zweck: 3D-Matrix Zutat × Figur × Kapitel fuer Graphity-Buecher
+# Version: 0.1.0 (MYZ00024 Vorarbeit, SUPERSEDED zu 0.2.0 SQLite)
+# Reference: B401 v1.2
+
+schema_version: "0.1.0"
+book_id: "<buch-slug, z.B. souveraene-maschine>"
+book_category: "C1|C2|C3|C4|C5|C6|C7"
+
+# =========================================
+# 1. ZUTATEN (Einfluesse, Autoren, Theorien)
+# =========================================
+zutaten:
+  # ID-Scheme: AUTOR-KONZEPT, UPPERCASE
+  STAHL-SCHATTENKIND:
+    quelle: "Stefanie Stahl - Das Kind in dir muss Heimat finden"
+    mechanik: "Glaubenssaetze aus der Kindheitswunde als unsichtbare Handlungs-Treiber"
+    kategorie: "psychologie"
+    seiten_ref: "Buch-Seite oder Kapitel"
+  VOSS-EMPATHIE:
+    quelle: "Chris Voss - Never Split the Difference"
+    mechanik: "Labeling, Mirroring, Calibrated Questions, 'That's right' als Wendepunkt"
+    kategorie: "verhandlung"
+  BERNE-TRANSAKTION:
+    quelle: "Eric Berne - Spiele der Erwachsenen"
+    mechanik: "Eltern-Ich, Erwachsenen-Ich, Kind-Ich. Psychologische Spiele."
+    kategorie: "psychologie"
+  GREENE-MACHT:
+    quelle: "Robert Greene - Laws of Human Nature + 48 Laws"
+    mechanik: "Verdeckte Ziele. Macht als Beziehungsdynamik."
+    kategorie: "macht"
+  CIALDINI-INFLUENCE:
+    quelle: "Robert Cialdini - Influence + Pre-Suasion"
+    mechanik: "6 Prinzipien: Reciprocity/Commitment/Social-Proof/Authority/Liking/Scarcity"
+    kategorie: "macht"
+  KAESTNER-TON:
+    quelle: "Erich Kaestner - Gesamtwerk"
+    mechanik: "Zaertliche Schaerfe. Saetze liebevoll und vernichtend. Humor der traurig macht."
+    kategorie: "stil"
+  SPIRAL-DYNAMICS:
+    quelle: "Graves/Beck/Wilber - Spiral Dynamics"
+    mechanik: "8+ Bewusstseinsstufen: Beige/Purpur/Rot/Blau/Orange/Gruen/Gelb/Tuerkis"
+    kategorie: "entwicklungs-stufen"
+  # ... weitere Zutaten
+
+# =========================================
+# 2. FIGUREN (nur C1 Roman, C3 Interaktiv)
+# =========================================
+figuren:
+  ROLF:
+    full_name: "Rolf Brauer"
+    alter_start: 69
+    alter_ende: 79
+    zutaten_aktiv:
+      - STAHL-SCHATTENKIND  # "Ich bin nur etwas wert, wenn ich gebraucht werde"
+      - GREENE-MACHT        # Verdecktes Ziel: Elena's Respekt
+      - VAN-DER-KOLK-KOERPER # Hande zittern
+      - BERNE-TRANSAKTION   # Eltern-Ich dominant
+      - KAESTNER-TON        # Ton fuer Rolf
+    disc_profil: "D-S"  # Primaer Rot, Sekundaer Gruen
+    spiral_bogen: "Blau -> Rot -> Gelb"
+    sacred_flaw: "Verwechselt Standhaftigkeit mit Staerke"
+    transformation_5sek_moment: "Faust auf Tisch -> Hande die reparieren"
+  MIRIAM:
+    full_name: "Miriam Brauer-Hagen"
+    # ... analog
+
+# =========================================
+# 3. KAPITEL (plot + dominanter Einfluss)
+# =========================================
+kapitel:
+  KAP-01:
+    titel: "Buero leer"
+    kapitel_nr: 1
+    plot_summary: "Tom geht, Riedel kommt, Rolf's Welt bricht"
+    figuren_aktiv: [ROLF]
+    dominant_einfluss:  # Max 2 Ebenen (Anti-Drift)
+      - STAHL-SCHATTENKIND
+      - KAESTNER-TON
+    subsidiar_einfluss:
+      - BERNE-TRANSAKTION
+    innere_zustaende:
+      ROLF: "Schattenkind aktiviert: ich werde nicht mehr gebraucht"
+    cross_refs_to_kapitel: [KAP-05, KAP-18]  # Plot-Links
+  KAP-09:
+    titel: "Parallelstruktur"
+    kapitel_nr: 9
+    plot_summary: "Rolf baut Funknetz/Lebensmittel/analoge Karten. Kern radikalisiert."
+    figuren_aktiv: [ROLF, KERN]
+    dominant_einfluss:
+      - GREENE-MACHT
+      - SPIRAL-DYNAMICS  # Purpur/Blau
+    innere_zustaende:
+      ROLF: "Hoehepunkt der Relevanz. Blind fuer Kerns Manipulation"
+    cross_refs_to_kapitel: [KAP-05-ARCHE-INIT, KAP-15-ARCHE-ZENIT]
+
+# =========================================
+# 4. INVARIANTS (Pre-Write-Hook-Checks)
+# =========================================
+invariants:
+  max_dominant_einfluss_per_kapitel: 2
+  max_ebenen_per_sub_prompt: 11  # Anti-Drift
+  min_figuren_per_kapitel: 1
+  zutaten_ohne_aktiv_figur_warning: true
+
+# =========================================
+# 5. RESOLVER-CONFIG
+# =========================================
+resolver:
+  placeholder_pattern: '\{\{CRX:([A-Z0-9-]+)(?::([A-Z0-9-]+))?(?::([A-Z0-9-]+))?\}\}'
+  # Format: {{CRX:ZUTAT}} oder {{CRX:ZUTAT:FIGUR}} oder {{CRX:ZUTAT:FIGUR:KAPITEL}}
+  fail_on_unresolved: true
+  warn_on_unused_zutat: true
+
+# =========================================
+# 6. META
+# =========================================
+meta:
+  created: "2026-04-19"
+  last_updated: "2026-04-19"
+  maintainer: "MYZ (Opus 4.7)"
+  parent_blueprint: "B401 v1.2"
+  cross_llm_belegung: "pending MYZ00024 cross-llm run"
+  crux_mk: true

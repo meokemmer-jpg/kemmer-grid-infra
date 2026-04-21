@@ -1,0 +1,44 @@
+{
+  "role": "worker",
+  "version": "v0.1.0",
+  "description": "Windows-Worker-PC. Delegate-Orchestrator fuer Copilot/Codex/Gemini/Grok-Calls. Kein Master-Task. Nur Feature-Branch-Push.",
+  "platform": "windows",
+  "required_clis": [
+    {"name": "python", "min_version": "3.12.0", "admin_required": true, "install_winget": "Python.Python.3.12"},
+    {"name": "node", "min_version": "20.0.0", "admin_required": true, "install_winget": "OpenJS.NodeJS.LTS"},
+    {"name": "git", "min_version": "2.40.0", "admin_required": false, "install_winget": "Git.Git"},
+    {"name": "gh", "min_version": "2.40.0", "admin_required": false, "install_winget": "GitHub.cli"},
+    {"name": "codex", "min_version": "0.118.0", "admin_required": false, "install_npm": "@openai/codex"},
+    {"name": "gemini", "min_version": "0.38.0", "admin_required": false, "install_npm": "@google/gemini-cli"},
+    {"name": "copilot", "min_version": "1.0.0", "admin_required": false, "install_gh_ext": "github/copilot-cli"},
+    {"name": "uv", "min_version": "0.4.0", "admin_required": false, "install_winget": "astral-sh.uv"},
+    {"name": "claude", "min_version": "2.0.0", "admin_required": false, "install_npm": "@anthropic-ai/claude-code"}
+  ],
+  "python_packages": [
+    {"name": "sentence-transformers", "min_version": "5.4.0", "install_cmd": "pip install sentence-transformers"},
+    {"name": "playwright", "min_version": "1.58.0", "install_cmd": "pip install playwright && python -m playwright install chromium"}
+  ],
+  "required_env_vars": [
+    {"name": "MACHINE_ROLE", "required_value": "WORKER-E|WORKER-F|WORKER-G", "note": "Lane-Zuordnung pro Worker"},
+    {"name": "GEMINI_API_KEY", "required": true, "sensitive": true},
+    {"name": "XAI_API_KEY", "required": false, "sensitive": true},
+    {"name": "ENABLE_PROMPT_CACHING_1H", "required_value": "true"}
+  ],
+  "required_rules_count": 40,
+  "required_rules_hash_source": "git@github.com:meokemmer-jpg/kemmer-grid-infra#claude-system/rules/",
+  "scheduled_tasks_required": [
+    {"name": "kemmer-heartbeat", "schedule": "every 5 min", "critical": true, "purpose": "LAN-Publish + Status-File-Touch"}
+  ],
+  "scheduled_tasks_forbidden": ["DF-*", "NLM-*", "Claude-*", "Vault-*", "Archon-*"],
+  "scheduled_tasks_forbidden_reason": "MR-1 Master-Singleton (nur Master hat diese Tasks, sonst NLM-Session-Kollision + Git-Push-Race)",
+  "nlm_login_allowed": false,
+  "nlm_data_access": "Vault-Spiegel lesen /Volumes/GoogleDrive/.../Claude-Vault/resources/_from-nlm/",
+  "git_push_rights": ["feature/*", "patch/*", "NICHT main"],
+  "admin_required_steps": ["winget install", "scheduled-task-creation"],
+  "network_requirements": {
+    "outbound": ["api.anthropic.com:443", "generativelanguage.googleapis.com:443", "api.github.com:443", "drive.google.com:443"],
+    "inbound_lan": {}
+  },
+  "capability_gate_test_suite": "golden-tasks/golden-task-suite.json",
+  "notes": "Worker lebt im Feature-Branch-Workflow. PR-Creation via gh-cli. Master-Review+Merge. Bei K_0/Q_0/Phronesis: IMMER an Master eskalieren, nie selbst entscheiden."
+}

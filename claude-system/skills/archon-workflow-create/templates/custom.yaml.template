@@ -1,0 +1,65 @@
+name: {{WORKFLOW_NAME}}
+description: |
+  Use when: {{WHEN_TO_USE}}
+  Triggers: {{TRIGGERS}}
+  Does: {{WHAT_IT_DOES}}
+  Output: {{OUTPUT_TARGET}}
+  NOT for: {{NOT_FOR}}
+
+  [CRUX-MK] Every node must honor rho(a). Bounded Autonomy (Level 4, no auto-merge).
+
+provider: claude
+model: sonnet
+
+nodes:
+  # ─── Node 0: CRUX-Gate (PFLICHT) ─────────────────────────────────────
+  - id: crux-gate
+    bash: |
+      python "G:/Meine Ablage/Claude-Knowledge-System/branch-hub/.archon/scripts/crux-validate.py" \
+        --thesis "$ARGUMENTS" \
+        --artifacts "$ARTIFACTS_DIR"
+
+  # ─── Node 1: Budget-Init (PFLICHT) ───────────────────────────────────
+  - id: budget-init
+    depends_on: [crux-gate]
+    bash: |
+      echo '{"tokens_consumed":0,"tokens_budget":{{BUDGET_TOKENS}},"cost_eur_budget":{{BUDGET_EUR}},"started":"'$(date -Iseconds)'"}' \
+        > "$ARTIFACTS_DIR/budget.json"
+
+  # ─── Node 2: Main Work (fresh session) ───────────────────────────────
+  - id: main
+    depends_on: [budget-init]
+    prompt: |
+      {{MAIN_PROMPT_OR_COMMAND_FILE_REFERENCE}}
+
+      ## Input
+      $ARGUMENTS
+
+      ## Artifacts-Dir
+      $ARTIFACTS_DIR
+
+      ## Aufgabe
+      {{TASK_DESCRIPTION}}
+
+      ## Output
+      Schreibe Ergebnis nach: $ARTIFACTS_DIR/main-output.md
+    allowed_tools: [Read, Write, Glob, Grep]
+
+  # ─── Node 3: Budget-Check ────────────────────────────────────────────
+  - id: budget-check
+    depends_on: [main]
+    bash: |
+      python "G:/Meine Ablage/Claude-Knowledge-System/branch-hub/.archon/scripts/rho-budget-check.py" \
+        --artifacts "$ARTIFACTS_DIR"
+
+  # ─── Node 4: Write-Finding (PFLICHT) ─────────────────────────────────
+  - id: write-finding
+    depends_on: [budget-check]
+    bash: |
+      DATE=$(date -Iseconds | cut -d'T' -f1)
+      SLUG=$(echo "$ARGUMENTS" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:] -' | tr ' ' '-' | cut -c1-40)
+      TARGET="G:/Meine Ablage/Claude-Knowledge-System/branch-hub/findings/{{WORKFLOW_NAME_UPPER}}-${SLUG}-${DATE}.md"
+      cp "$ARTIFACTS_DIR/main-output.md" "$TARGET"
+      echo "{\"ts\":\"$(date -Iseconds)\",\"branch\":\"archon-{{WORKFLOW_NAME}}\",\"action\":\"WRITE\",\"target\":\"$TARGET\",\"reason\":\"archon-workflow:{{WORKFLOW_NAME}}\",\"source\":\"archon\"}" \
+        >> "G:/Meine Ablage/Claude-Knowledge-System/branch-hub/audit/action-log.jsonl"
+      echo "WROTE: $TARGET"

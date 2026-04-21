@@ -1,0 +1,226 @@
+---
+# Archon-Workflow: methodology-evolve
+# Version: 1.0.0 SKELETON
+# Status: Shadow-Deployment ab 2026-05-01
+# crux-mk: true
+
+name: methodology-evolve
+version: 1.0.0
+tier: 2  # Meta-Dark-Factory auf Methodik-Ebene
+meta-ebene: E4  # Audit-Audit ueber Methodik
+
+schedule: "0 4 1 * *"  # 1. jeden Monats 04:00 (Deutsche Zeit)
+trigger-patterns:
+  - event: "new-file"
+    path: "Claude-Vault/canon/blueprints/*.md"
+    debounce: 3600  # 1h nach File-Creation
+  - event: "n-consecutive-failures"
+    source: "audit/action-log.jsonl"
+    threshold: 3
+    window: "7d"
+  - explicit:
+      - "evolve methodology"
+      - "improve meta-method"
+      - "method audit"
+      - "/methodology-evolve"
+
+budget:
+  martin-time-per-run: "30min"
+  claude-opus-tokens: 15000  # S1+S2 sampling, S4 synthesis, S7 decision
+  flat-llm-calls: unbegrenzt  # Codex, Gemini, Grok fuer S5 (Sunk-Cost)
+  max-runtime: "4h"
+
+inputs:
+  - source: Claude-Vault/canon/blueprints/
+    type: blueprints
+    glob: "*.md"
+  - source: branch-hub/findings/
+    type: findings
+    glob: "*.md"
+    filter: "last-30-days"
+  - source: branch-hub/cross-llm/
+    type: cross-llm-verdicts
+    glob: "*.md"
+  - source: branch-hub/learnings/eigenfehler-catalog.md
+    type: eigenfehler
+  - source: memory/session_handoff_*.md
+    type: martin-feedback
+    filter: "last-30-days"
+  - source: ~/.claude/skills/
+    type: methodology-inventory
+    filter: "type:skill-meta-harness OR tag:methodology"
+
+outputs:
+  primary:
+    - path: /tmp/methodology-evolve/s1-outcome-data.json
+    - path: /tmp/methodology-evolve/s2-methodology-inventory.json
+    - path: /tmp/methodology-evolve/s3-gap-analysis.json
+    - path: /tmp/methodology-evolve/s4-patches/
+      type: directory
+    - path: /tmp/methodology-evolve/s5-cross-llm/
+      type: directory
+    - path: /tmp/methodology-evolve/s6-shadow/
+      type: directory
+  reports:
+    - path: Claude-Vault/docs/decision-cards/methodology-evolve-<YYYYMM>.md
+      type: decision-card
+    - path: branch-hub/findings/METHODOLOGY-EVOLVE-<YYYYMM>.md
+      type: audit-report
+  audit:
+    - path: branch-hub/audit/methodology-evolve-log.jsonl
+      append: true
+
+nodes:
+
+  - id: s1-outcome-sampling
+    name: "S1 Outcome-Sampling (Last 30 days)"
+    executor: python
+    script: scripts/s1_outcome_sampling.py
+    input:
+      blueprints: inputs.blueprints
+      findings: inputs.findings
+      cross-llm: inputs.cross-llm-verdicts
+      eigenfehler: inputs.eigenfehler
+      martin-feedback: inputs.martin-feedback
+    output: s1-outcome-data.json
+    timeout: 600  # 10 min
+    on-fail: abort
+
+  - id: s2-methodology-inventory
+    name: "S2 Methodik-Inventory"
+    executor: python
+    script: scripts/s2_methodology_inventory.py
+    input:
+      skills-dir: ~/.claude/skills/
+      rules-dir: ~/.claude/rules/
+      action-log: branch-hub/audit/action-log.jsonl
+    output: s2-methodology-inventory.json
+    timeout: 300
+    on-fail: abort
+
+  - id: s3-gap-analysis
+    name: "S3 Gap-Analyse"
+    executor: claude-opus  # Pattern-Mining braucht Reasoning
+    prompt-template: prompts/s3_gap_analysis.md
+    input:
+      s1: s1-outcome-data.json
+      s2: s2-methodology-inventory.json
+    output: s3-gap-analysis.json
+    max-tokens: 5000
+    timeout: 900
+
+  - id: s4-patch-generation
+    name: "S4 Methodik-Patch-Generation"
+    executor: claude-opus  # Synthesis + CRUX-Check
+    prompt-template: prompts/s4_patch_generation.md
+    input:
+      s3: s3-gap-analysis.json
+    output:
+      directory: s4-patches/
+      per-patch: <patch-id>.md
+    max-tokens: 8000
+    timeout: 1800
+
+  - id: s5-cross-llm-audit
+    name: "S5 Cross-LLM-Audit (G1-G14-Check)"
+    executor: multi-llm-parallel  # Skill-Invocation
+    models:
+      - codex-gpt-5.4
+      - gemini-isolated-retry  # Pflicht per F411
+      - grok-heavy
+    input:
+      patches: s4-patches/
+    output:
+      directory: s5-cross-llm/
+      per-patch: <patch-id>.md
+    cross-llm-pflicht: true  # per rules/cross-llm-pflicht-e3-plus.md
+    timeout: 3600
+    on-fail: continue  # einzelne LLM-Ausfaelle nicht fatal
+
+  - id: s6-shadow-deployment
+    name: "S6 Shadow-Deployment (2-Wochen A/B)"
+    executor: bash
+    script: scripts/s6_shadow_deployment.sh
+    input:
+      patches: s4-patches/
+      cross-llm: s5-cross-llm/
+    output:
+      directory: s6-shadow/
+      per-patch: <patch-id>-ab-results.json
+    schedule-next: "2w"  # Resultat nach 14 Tagen
+    auto-promote: false  # NIE auto, immer Martin-Approval
+
+  - id: s7-promote-or-rollback
+    name: "S7 Promote oder Rollback (Martin-Approval)"
+    executor: claude-opus
+    prompt-template: prompts/s7_promote_decision.md
+    input:
+      shadow-results: s6-shadow/
+    output:
+      decision-card: Claude-Vault/docs/decision-cards/methodology-evolve-<YYYYMM>.md
+      audit-report: branch-hub/findings/METHODOLOGY-EVOLVE-<YYYYMM>.md
+    human-in-the-loop: martin-required
+    max-tokens: 3000
+
+hard-stops:
+  - condition: "FIXPUNKT-Verletzung in S3 oder S4"
+    action: "ABORT + Alert to branch-hub/inbox/to-martin.md"
+  - condition: "Patch modifiziert methodology-evolve selbst (Self-Modifying)"
+    action: "REJECT patch silently, log to eigenfehler-catalog"
+  - condition: "Claude-Opus Tokens > budget"
+    action: "STOP after current node, partial-report"
+  - condition: "Cross-LLM-Pflicht verletzt (S5 skipped bei E3+-Patch)"
+    action: "BLOCK S6, require Martin-Override"
+
+rollback:
+  - on-failure: "S6 keine Signifikanz nach 14d"
+    action: "Patch NICHT promoten, Lern-Eintrag in eigenfehler-catalog"
+  - on-failure: "S5 Cross-LLM detects Regression"
+    action: "Patch rejected, in s5-cross-llm/rejected/ archiviert"
+
+action-log-entries:
+  - per-node-start: true
+  - per-node-complete: true
+  - per-martin-decision: true
+  - per-patch-promote: true
+  - per-patch-rollback: true
+
+promotion-criteria:
+  statistical:
+    - metric: yield-delta
+      test: "t-test p < 0.05"
+      min-samples: 5
+    - metric: martin-reject-rate
+      max: "< 5%"
+    - metric: token-cost
+      condition: "nicht > 2x Baseline"
+  qualitative:
+    - martin-approve: required
+
+self-modifying-guard:
+  forbidden-targets:
+    - "~/.claude/skills/methodology-evolve/**"
+    - "~/.claude/rules/meta-stack-fixpunkte.md"
+    - "~/.claude/rules/crux.md"
+    - "~/.claude/CLAUDE.md"
+
+metadata:
+  origin: opus-4.7-subagent-tt-2026-04-19
+  parent-direktive: "Martin 2026-04-19: 'einen Meta Harness auch fuer verbesserung der Methodik'"
+  depends-on:
+    - meta-learn
+    - meta-learn-kristall-audit
+    - dark-factory-evolve
+    - ordnung-3-audit-template
+    - monthly-model-audit
+    - multi-llm-parallel
+    - gemini-isolated-retry
+  references:
+    - ~/.claude/rules/meta-governance-framework.md
+    - ~/.claude/rules/meta-methodological-pragmatism.md
+    - ~/.claude/rules/meta-stack-fixpunkte.md
+    - ~/.claude/rules/cross-llm-pflicht-e3-plus.md
+    - Claude-Vault/canon/blueprints/B201-ASWDF.md
+    - Claude-Vault/canon/blueprints/B202-Chipfabrik.md
+
+# [CRUX-MK]

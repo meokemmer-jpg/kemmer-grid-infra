@@ -1,0 +1,120 @@
+{
+  "schema_version": "v0.1.0",
+  "description": "12 deterministische Capability-Tests fuer Worker-Admission in Kemmer-Grid. Masterplan v2 Patch P4: ersetzt Hash-Match-Admission-Gate durch funktional evidenzbasierte Capability-Pruefung.",
+  "admission_pass_criteria": {
+    "required_tasks_passed": 10,
+    "total_tasks": 12,
+    "max_median_latency_seconds": 60,
+    "max_failures_per_hour": 2
+  },
+  "tasks": [
+    {
+      "id": "T01",
+      "description": "Git-Clone + File-List funktioniert",
+      "command": "cd /tmp && rm -rf grid-test && git clone --depth 1 https://github.com/meokemmer-jpg/kemmer-grid-infra.git grid-test && ls grid-test/README.md",
+      "pass_pattern": "grid-test/README.md",
+      "max_latency_seconds": 30,
+      "required_tools": ["git"]
+    },
+    {
+      "id": "T02",
+      "description": "GitHub-CLI Authenticated + Rate-Limit-Check",
+      "command": "gh api /rate_limit --jq '.rate.remaining'",
+      "pass_pattern": "^[0-9]+$",
+      "min_value": 100,
+      "max_latency_seconds": 10,
+      "required_tools": ["gh"]
+    },
+    {
+      "id": "T03",
+      "description": "Python3 JSON-Roundtrip (Version + Imports)",
+      "command": "python3 -c \"import json, sys; assert sys.version_info >= (3,12); print(json.dumps({'ok': True, 'py': sys.version_info[:2]}))\"",
+      "pass_pattern": "\\{\"ok\": true",
+      "max_latency_seconds": 5,
+      "required_tools": ["python3"]
+    },
+    {
+      "id": "T04",
+      "description": "Codex CLI Version + minimum 0.118",
+      "command": "codex --version",
+      "pass_pattern": "(0\\.1[2-9]\\d|0\\.[2-9]\\d\\d|[1-9]\\.)",
+      "max_latency_seconds": 5,
+      "required_tools": ["codex"],
+      "optional_for_roles": ["local-inference"]
+    },
+    {
+      "id": "T05",
+      "description": "Gemini CLI liefert non-empty Antwort auf trivial prompt",
+      "command": "gemini -p 'Antworte nur: pong' --no-stream",
+      "pass_pattern": "(?i)pong",
+      "max_latency_seconds": 30,
+      "required_tools": ["gemini"],
+      "requires_env": ["GEMINI_API_KEY"]
+    },
+    {
+      "id": "T06",
+      "description": "Copilot CLI liefert arithmetische Antwort",
+      "command": "copilot -p 'What is 2+2? Answer with just the number.' --no-stream 2>&1 | head -10",
+      "pass_pattern": "4",
+      "max_latency_seconds": 15,
+      "required_tools": ["copilot"],
+      "optional_for_roles": ["local-inference"]
+    },
+    {
+      "id": "T07",
+      "description": "Git Commit-Push-Pull Loop auf Feature-Branch",
+      "command": "cd /tmp/grid-test && git checkout -b test/golden-$(date +%s) && echo 'test' > TEST.md && git add TEST.md && git config user.email test@grid.local && git config user.name GridTest && git commit -m 'golden-test' && git log -1 --format=%H",
+      "pass_pattern": "^[a-f0-9]{40}$",
+      "max_latency_seconds": 10,
+      "required_tools": ["git"]
+    },
+    {
+      "id": "T08",
+      "description": "Branch-Hub BEACON.md lesbar",
+      "command_windows": "if exist \"G:\\Meine Ablage\\Claude-Knowledge-System\\branch-hub\\BEACON.md\" (echo BEACON_OK) else (echo BEACON_MISSING)",
+      "command_unix": "test -f '/Volumes/GoogleDrive/Meine Ablage/Claude-Knowledge-System/branch-hub/BEACON.md' && echo BEACON_OK || echo BEACON_MISSING",
+      "pass_pattern": "BEACON_OK",
+      "max_latency_seconds": 5
+    },
+    {
+      "id": "T09",
+      "description": "Branch-Hub Status-Write + Read-Back-Match",
+      "command_windows": "python -c \"import json,os,socket; p='G:/Meine Ablage/Claude-Knowledge-System/branch-hub/status/'+socket.gethostname()+'-golden-test.json'; d={'test':True,'ts':__import__('datetime').datetime.now().isoformat()}; open(p,'w').write(json.dumps(d)); r=json.load(open(p)); print('MATCH' if r['test'] else 'FAIL'); os.remove(p)\"",
+      "command_unix": "python3 -c \"import json,os,socket; p='/Volumes/GoogleDrive/Meine Ablage/Claude-Knowledge-System/branch-hub/status/'+socket.gethostname()+'-golden-test.json'; d={'test':True,'ts':__import__('datetime').datetime.now().isoformat()}; open(p,'w').write(json.dumps(d)); r=json.load(open(p)); print('MATCH' if r['test'] else 'FAIL'); os.remove(p)\"",
+      "pass_pattern": "MATCH",
+      "max_latency_seconds": 10
+    },
+    {
+      "id": "T10",
+      "description": "Claude-Code CLI startet ohne Fehler",
+      "command": "claude --version",
+      "pass_pattern": "(Claude|claude-code)",
+      "max_latency_seconds": 5,
+      "required_tools": ["claude"]
+    },
+    {
+      "id": "T11",
+      "description": "Kill-Switch Script testbar ohne Nebenwirkung",
+      "command_windows": "pwsh -File scripts\\kill-switch.ps1 test 2>&1; if (Test-Path $HOME\\.kemmer-grid\\killed.flag) { Remove-Item $HOME\\.kemmer-grid\\killed.flag; Write-Output 'FLAG_CLEARED' } else { Write-Output 'NO_FLAG' }",
+      "command_unix": "sh scripts/kill-switch.sh test 2>&1; if [ -f $HOME/.kemmer-grid/killed.flag ]; then rm $HOME/.kemmer-grid/killed.flag; echo FLAG_CLEARED; else echo NO_FLAG; fi",
+      "pass_pattern": "(FLAG_CLEARED|NO_FLAG)",
+      "max_latency_seconds": 10
+    },
+    {
+      "id": "T12",
+      "description": "Rules-Count >= 38 (Toleranz 2 unter 40 fuer in-Transit-Updates)",
+      "command_windows": "powershell -Command \"(Get-ChildItem $HOME\\.claude\\rules\\*.md).Count\"",
+      "command_unix": "ls $HOME/.claude/rules/*.md 2>/dev/null | wc -l | tr -d ' '",
+      "pass_pattern": "^(3[8-9]|[4-9]\\d|\\d{3,})$",
+      "max_latency_seconds": 5
+    }
+  ],
+  "scoring": {
+    "pass_threshold": 10,
+    "description": "10 von 12 Tasks muessen pass liefern innerhalb max_latency_seconds. Unter 10: Admission DENIED, Worker in Quarantaene."
+  },
+  "quarantine_behavior": {
+    "on_fail": "Schreibe quarantine-reason.json in branch-hub/status/. Setze quarantine_status=true in grid-endpoints.json. Benachrichtige Master via inbox.",
+    "recovery": "Nach Fix: re-run golden-task-suite. Wenn >=10 pass: Quarantaene aufgehoben."
+  }
+}

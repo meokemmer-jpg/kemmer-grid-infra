@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ResearchValueScore Schema v0.1.0",
+  "description": "Schema fuer Research-Value-Score Input/Output (Welle-12 Gray-Killer)",
+  "type": "object",
+  "definitions": {
+    "Input": {
+      "type": "object",
+      "required": ["output_text", "thema"],
+      "properties": {
+        "output_text": {
+          "type": "string",
+          "description": "Voller Research-Output (Finding, Knowledge-Diff, Subagent-Report)"
+        },
+        "thema": {
+          "type": "string",
+          "description": "Kemmer-Thema (z.B. 'KPM-Sizing', 'DF-06-Optimization', 'Cape-Coral')"
+        },
+        "kemmer_kontext": {
+          "type": ["object", "null"],
+          "properties": {
+            "decision_pending": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "invariants": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "domain": {
+              "type": "string",
+              "enum": ["hotel-tech", "medizin", "steuer-legal", "familie", "meta-lern", "code-sae", "finanzen"]
+            }
+          }
+        }
+      }
+    },
+    "Output": {
+      "type": "object",
+      "required": [
+        "decision_delta",
+        "predictive_gain",
+        "compression",
+        "transfer",
+        "robustness",
+        "total",
+        "zone",
+        "justifications",
+        "timestamp",
+        "thema",
+        "output_length_chars"
+      ],
+      "properties": {
+        "decision_delta": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3,
+          "description": "Aendert der Output eine konkrete Kemmer-Entscheidung?"
+        },
+        "predictive_gain": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3,
+          "description": "Erlaubt er bessere Vorhersagen ueber K_0/Q_0/Systemdynamik?"
+        },
+        "compression": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3,
+          "description": "Wird komplexes Terrain auf wenige Kern-Klauseln verdichtet?"
+        },
+        "transfer": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3,
+          "description": "Ist Insight jenseits des aktuellen Themas anwendbar?"
+        },
+        "robustness": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3,
+          "description": "Haelt er gegen adversariale Perturbation?"
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        },
+        "zone": {
+          "type": "string",
+          "enum": ["LOW", "MID", "HIGH"],
+          "description": "LOW 0-5, MID 6-10, HIGH 11-15"
+        },
+        "justifications": {
+          "type": "object",
+          "required": ["decision_delta", "predictive_gain", "compression", "transfer", "robustness"],
+          "properties": {
+            "decision_delta": {"type": "string"},
+            "predictive_gain": {"type": "string"},
+            "compression": {"type": "string"},
+            "transfer": {"type": "string"},
+            "robustness": {"type": "string"}
+          }
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "thema": {
+          "type": "string"
+        },
+        "output_length_chars": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "scorer_version": {
+          "type": "string",
+          "const": "0.1.0"
+        }
+      }
+    }
+  }
+}

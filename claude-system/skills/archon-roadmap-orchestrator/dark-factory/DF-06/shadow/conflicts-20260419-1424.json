@@ -1,0 +1,50 @@
+﻿python : WARN: G:/Meine Ablage/Claude-Knowledge-System/branch-hub\state\event-log.jsonl: Expecting value: line 1 
+column 1 (char 0)
+In C:\Users\marti\.claude\skills\archon-roadmap-orchestrator\dark-factory\DF-06\df06-light-pass.ps1:36 Zeichen:18
++ ... conflicts = python "$SCRIPTS\detect_roadmap_conflicts.py" 2>&1 | Out- ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (WARN: G:/Meine ...lumn 1 (char 0):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+{
+  "conflicts": [
+    {
+      "kind": "duplicate",
+      "task_id": "M1b",
+      "details": "fingerprint-match with M1"
+    },
+    {
+      "kind": "duplicate",
+      "task_id": "O1a",
+      "details": "fingerprint-match with M1"
+    },
+    {
+      "kind": "duplicate",
+      "task_id": "M2",
+      "details": "fingerprint-match with M1"
+    },
+    {
+      "kind": "duplicate",
+      "task_id": "M3",
+      "details": "fingerprint-match with M1"
+    },
+    {
+      "kind": "duplicate",
+      "task_id": "M4",
+      "details": "fingerprint-match with M1"
+    },
+    {
+      "kind": "duplicate",
+      "task_id": "M5",
+      "details": "fingerprint-match with M1"
+    },
+    {
+      "kind": "budget-breach",
+      "branch": "Opus47-METADD",
+      "details": "rho_sum 230000 > cap 100000"
+    }
+  ],
+  "summary": "7 conflicts detected.",
+  "severity": "mid"
+}
+

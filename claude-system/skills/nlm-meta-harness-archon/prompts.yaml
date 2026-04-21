@@ -1,0 +1,44 @@
+# NLM-Meta-Harness-Archon Prompt Templates
+# Martin-Kemmer-spezifisch, 4 Domains x 5 Permutationen
+# Used by orchestrator.py drill_domain()
+
+domains:
+  business:
+    stop_bit: 0.7
+    max_permutations: 5
+    queries:
+      - "Was ist die wichtigste Business-Erkenntnis in diesem Notebook, die NICHT in allgemeinen Business-Buechern steht? Gib konkrete Zahlen und nenne Kemmer-Entities (9dots, HeyLou, Graphity, LexVance, KPM)."
+      - "Wie veraendern sich die Strategien von 9dots/HeyLou/Graphity/KPM durch die Erkenntnisse in diesem Notebook? Nenne pro Entity einen konkreten Delta-rho-Hebel."
+      - "Warum sind bestimmte Entscheidungen aus diesem Notebook CRUX-kritisch fuer Martin Kemmer (max Integral rho*L ueber T_life)? rho-Quantifizierung pro Beispiel in EUR/Jahr."
+      - "Weshalb funktioniert das Kemmer-Business-Modell (AI-first Hotels + Agentic Platform + Portfolio-Motor) anders als Standard-SaaS- oder Standard-Hotel-Modelle? Nenne die 3 fundamentalsten Unterschiede."
+      - "Wieso werden die meisten Umsetzungen solcher Strategien scheitern, auch wenn die Idee stimmt? Nenne die 3 groessten Blocker und wie Kemmer sie umgeht oder noch nicht umgeht."
+
+  ai:
+    stop_bit: 0.7
+    max_permutations: 5
+    queries:
+      - "Welches AI-Prinzip wird in diesem Notebook entdeckt oder formalisiert, das in der allgemeinen AI-Literatur (OpenAI/Anthropic/Google-Publikationen) uebersehen oder unter-gewichtet wird?"
+      - "Wie funktioniert die spezifische Kemmer-AI-Doktrin (SAE v8 mit 600 Agenten, Trinity-Pattern, HIVE-Score via Shannon-Entropy, Myzel-Layer MYZ-01-37) technisch im Kern? Nenne die 3 wichtigsten Design-Entscheidungen."
+      - "Warum ist die Kemmer-AI-Architektur robuster (oder schwaecher) als OpenAI/Anthropic/Google-Pendants? Konkretisiere mit einem Vergleich (z.B. Agent-Orchestrierung, Governance, Kosten-Struktur)."
+      - "Weshalb ist Shannon-Entropy + Governance (Bounded-Veto, COSMOS, MHC) das zentrale AI-Fundament in Kemmer's Doktrin? Warum nicht einfach RLHF + Constitutional AI wie Anthropic?"
+      - "Wieso wird emergente AI-Intelligenz in Kemmer's Modell erst durch bestimmte Constraints (Hamiltonian H=u+lambda*f, Trinity-Pattern, Relegation F_cum=0.98) moeglich? Was waere ohne diese Constraints?"
+
+  learning:
+    stop_bit: 0.7
+    max_permutations: 5
+    queries:
+      - "Was ist die wichtigste Lern-Meta-Regel in diesem Notebook? Wenn du nur eine einzige Regel an Kemmer uebergeben koenntest, welche waere es und warum?"
+      - "Wie lernt ein System (Mensch ODER AI) am effizientesten laut Kemmer-Doktrin? Nenne die 3 konkreten Mechanismen (Wargames, Cross-LLM, Shadow-Mode, etc) und warum sie zusammen wirken."
+      - "Warum scheitern die meisten Lern-Strategien trotz hoher Motivation? Nenne die 3 groessten Anti-Patterns (Goodhart, Theater, Bias-Reinforcement) mit konkreten Beispielen."
+      - "Weshalb ist Meta-Lernen (Lernen ueber Lernen, Wargame der Wargames) fundamental fuer Skalierung von 7 Hotels auf 177? Gib die formale mathematische Begruendung (Metcalfe, Shannon, Hamilton)."
+      - "Wieso sind Wargames und Cross-LLM die Kern-Beschleuniger fuer Lernen in Kemmer's Konzept? Was macht diese Methodik anders als Peer-Review oder Standard-A/B-Testing?"
+
+  wisdom:
+    stop_bit: 0.7
+    max_permutations: 5
+    queries:
+      - "Welche Weisheit in diesem Notebook wird oft uebersehen oder missverstanden, obwohl sie die tiefste Einsicht enthaelt? Formuliere sie als einen einzigen Satz."
+      - "Wie manifestiert sich Weisheit (unterschieden von Intelligenz und Wissen) konkret in Kemmer-Entscheidungen? Gib 2-3 Beispiele aus der Notebook-Quelle."
+      - "Warum braucht es Weisheit ZUSAETZLICH zu AI-Power und Kapital fuer die Erreichung von Kemmer's CRUX (max Integral rho*L ueber T_life, Familie Kemmer)? Was waere das Worst-Case-Szenario ohne diese Weisheits-Komponente?"
+      - "Weshalb ist die Zeitwert-Verfassung + Hamilton-Optimierung + Clausewitz-Mathematik eine weisheitsbasierte Doktrin (nicht nur eine technische)? Was ist daran philosophisch, nicht nur algorithmisch?"
+      - "Wieso fuehrt pure Optimierung ohne Weisheit zu Goodhart-Failures und Paperclip-Maximizers? Nenne die 3 wichtigsten Schutzmechanismen (MHC, COSMOS, Fixpunkt-Hardening) und warum sie jeweils gebraucht werden."

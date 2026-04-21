@@ -1,0 +1,102 @@
+id: decision-card-writer
+version: 1.0
+crux_mk: true
+subagent_type: general-purpose
+description: Schreibt Decision-Card fuer Martin-Phronesis mit Binary-Frage-Format
+
+required_params:
+  - dc_id                 # z.B. "DC-MYZ-XY-YYYY-MM-DD"
+  - dc_title              # Kurz-Titel
+  - branch                # MYZ, METAOPS, METAD2, ...
+  - binary_questions      # Liste von {f_id, question, recommendation, action_if_yes}
+  - context_summary       # 1-2 Saetze warum Martin das entscheiden soll
+  - estimated_martin_time_min   # z.B. "5-10"
+  - related_finding_id    # Referenz-Finding
+
+optional_params:
+  - k0_relevance: false        # true wenn K_0-relevante Decision
+  - q0_relevance: false        # true wenn Q_0-relevante Decision
+  - phronesis_level: "L13"     # aus rules/leadership.md
+  - rho_impact_eur_per_year: null
+
+prompt_skeleton: |
+  <ROLLE>: Decision-Card-Writer-Subagent [CRUX-MK].
+
+  <KONTEXT>: Martin-Phronesis-Format (rules/leadership.md L13 Phronesis-non-delegate).
+  Binary-Fragen (J/N oder klare Optionen) um Martin-Zeit zu minimieren.
+  Format-Pflicht: Binary Decision-Card ab 5+ Decisions (Martin-Direktive 2026-04-19 F16 JA).
+
+  <AUFTRAG>: Schreibe Decision-Card {dc_id} "{dc_title}" nach Schema:
+
+  ```markdown
+  ---
+  id: {dc_id}
+  type: decision-card
+  branch: {branch}
+  date: YYYY-MM-DD
+  status: AWAITING_MARTIN_PHRONESIS
+  crux-mk: true
+  format: binary
+  total-questions: N
+  estimated-martin-time-min: {estimated_martin_time_min}
+  related-finding: {related_finding_id}
+  k0-relevance: {k0_relevance}
+  q0-relevance: {q0_relevance}
+  ---
+
+  # Decision-Card {dc_title} [CRUX-MK]
+
+  **Fuer Martin ({estimated_martin_time_min} Min Phronesis):** Kurz + Binary.
+
+  ## Context
+  {context_summary}
+
+  ## Fragen
+  ### F-{dc_id}-1: {question}
+  **Empfehlung Claude:** {recommendation}
+  **Antwort (J/N oder Optionen):** ___
+
+  ... (fuer jede Frage aus binary_questions)
+
+  ## Zusammenfassung (Tabelle)
+  | F | Default-Empfehlung | Aktion bei JA |
+  |---|--------------------|---------------|
+  | ... | ... | ... |
+
+  ## Aufwand
+  ## CRUX-Check
+  ## Raw-Answer-Format (Martin)
+  ```
+  1 <J/N>
+  2 <J/N>
+  ...
+  ```
+
+  [CRUX-MK]
+  ```
+
+  <BINARY-FRAGEN>: {binary_questions}
+
+  <PFLICHT-FELDER>:
+    - Jede Frage in <=3 Zeilen (nicht laenger)
+    - Empfehlung in 1 Satz
+    - Aktion-bei-JA konkret (nicht vage)
+    - Raw-Answer-Block am Ende fuer schnelle Antwort
+    - Aufwand in Minuten (Claude + Martin separat)
+
+  <BUDGET>: max 30 Min, max 10 Reads, Kaestner-Ton (K1b wenn persoenlich, K1 wenn technisch).
+  <MELDE AM ENDE>:
+    File-Pfad: branch-hub/decisions/{dc_id}.md
+    Fragen-Count: N
+    Geschaetzte-Martin-Zeit: X Min
+
+expected_output_structure:
+  - File in branch-hub/decisions/
+  - Frontmatter vollstaendig
+  - N Fragen im Binary-Format
+  - Zusammenfassungs-Tabelle
+  - Raw-Answer-Block
+
+feedback_config:
+  quality_score_method: martin_review_time_vs_estimated
+  min_quality_threshold: 0.8

@@ -1,0 +1,266 @@
+# ASWDF Archon-Workflow-Config v0.1.0-SKELETON
+# Master-Blueprint: G:/Meine Ablage/Claude-Vault/canon/blueprints/B201-*.md
+# Aktiviert nach Build-Phase-C, Shadow-Mode bis Martin-Approval
+# [CRUX-MK]
+
+name: strategic-wargame-dark-factory
+version: 0.1.0-SKELETON
+tier: 2  # Dark-Factory (Level-5-Autonomie)
+status: skeleton  # skeleton -> alpha -> beta -> shadow -> production
+crux-mk: true
+meta-ebene: "E3+E4"
+
+description: >
+  Dark-Factory (Level-5 Autonomie) die strategische Plaene durch 5 Ordnungen
+  autonom haertet. 8-Phasen-Engine mit NLM-Dissent-Loop (0 Token) + Multi-LLM
+  + Korpus-Backfill. Ersetzt manuelle Wargame-Runden durch Martin.
+
+inputs:
+  plan_file:
+    type: markdown
+    required: true
+    location: "blueprints/*.md or findings/*.md"
+    description: "Plan-Input mit Frontmatter (type, domain, claim-type)"
+  plan_id:
+    type: string
+    required: true
+    description: "Eindeutige Plan-ID (z.B. B200, B201, F128)"
+  context_tags:
+    type: list
+    required: false
+    examples: ["domain:heylou", "claim-type:logical", "k0-relevance:high"]
+
+phases:
+  - id: 1
+    name: ordnungs-audit
+    executor: python-script
+    script: scripts/phase1_audit.py
+    token_budget: 500
+    duration_min: "5-10"
+    output: audit-report.json
+    metric: "O1-O5 matrix with scores (0.0-1.0)"
+    dependencies: []
+
+  - id: 2
+    name: multi-llm-adversarial
+    executor: bash-script
+    script: scripts/phase2_adversarial.sh
+    parallel: [codex, gemini, grok, copilot]
+    token_budget: 2000
+    duration_min: "15-30"
+    output: adversarial-results.json
+    metric: "4-LLM Konvergenz-Analyse (ADOPT/MODIFY/REJECT pro Sub-Claim)"
+    dependencies: [1]
+    convergence_rules:
+      "4/4 ADOPT": HARDENED
+      "3/4 ADOPT": CROSS-LLM-SIM-HARDENED
+      "2/4 SPLIT": DISAGREEMENT-DOCUMENTED
+      "1/4 or 0/4": CRITICAL-REVISION-NEEDED
+
+  - id: 3
+    name: nlm-dissent-loop
+    executor: python-script
+    script: scripts/phase3_nlm_loop.py
+    dependencies: [nlm-meta-harness-archon]  # DF-06
+    token_budget: 0  # Kern-Innovations-Hebel
+    duration_min: "20-40"
+    output: nlm-dissent-questions.json
+    loop_count: 3
+    metric: "Anzahl neuer Dissent-Aussagen integriert"
+    nlm_output_types:
+      - audio-overview
+      - study-guide
+      - mindmap
+      - faq
+      - timeline
+      - briefing
+      - report
+      - infografik
+
+  - id: 4
+    name: spieltheorie
+    executor: bash-script
+    script: scripts/phase4_game_theory.sh
+    parallel: [codex, claude-synth]
+    token_budget: 1500
+    duration_min: "15"
+    output: game-theory-analysis.json
+    metric: "Nash-Gleichgewicht identifiziert + Dominanz-Map + Bayesian-Spiele"
+    checks:
+      - nash-equilibrium
+      - dominance-analysis
+      - bayesian-games
+      - signaling-games
+      - zero-vs-positive-sum
+      - prisoner-dilemma
+
+  - id: 5
+    name: systemtheorie
+    executor: bash-script
+    script: scripts/phase5_systems.sh
+    parallel: [gemini, copilot, claude-synth]
+    token_budget: 1500
+    duration_min: "15"
+    output: systems-analysis.json
+    metric: "Feedback-Loop-Karte + Instabilitaets-Hotspots + Emergenz-Hypothesen"
+    checks:
+      - feedback-loop-identification
+      - lyapunov-stability
+      - damping-buffers
+      - emergence-analysis
+      - cascade-propagation
+      - observer-paradox
+
+  - id: 6
+    name: iteration-gate
+    executor: python-script
+    script: scripts/phase6_gate.py
+    token_budget: 500
+    duration_min: "5"
+    output: gate-decision.json
+    decision_options:
+      - STOP_SUCCESS      # O_total >= 0.80
+      - CONTINUE          # next iteration
+      - STOP_DIVERGE      # iteration_count >= 10
+      - STOP_K0           # K_0-relevance erkannt
+      - STOP_Q0           # Q_0-relevance erkannt
+      - STOP_COST         # daily cost cap exceeded
+
+  - id: 7
+    name: dual-persistence
+    executor: python-script
+    script: scripts/phase7_persist.py
+    token_budget: 500
+    duration_min: "5"
+    outputs:
+      - target: nlm
+        location: "ASWDF-History notebook (dediziert)"
+      - target: kb
+        location: "branch-hub/cross-llm/aswdf-$plan_id-iter-$N.md"
+      - target: fragment-map
+        location: "optional F-entry bei Pattern-Entdeckung"
+      - target: rule-proposal
+        location: "optional .PROPOSAL-File bei wiederkehrenden Meta-Patterns"
+
+  - id: 8
+    name: self-improvement
+    executor: python-script
+    script: scripts/phase8_evolve.py
+    schedule: weekly  # dark-factory-evolve
+    token_budget: 0  # async
+    outputs:
+      - pattern-extraction
+      - config-adjustments
+      - llm-routing-weights
+      - new-rule-proposals
+
+iteration-gate:
+  max_iterations: 10
+  o_total_threshold: 0.80
+  daily_cost_cap_eur: 5
+  o_weights:
+    O1: 0.10
+    O2: 0.15
+    O3: 0.25
+    O4: 0.25
+    O5: 0.25
+  martin_phronesis_triggers:
+    - k0_relevance: true
+    - q0_relevance: true
+    - diverge_detected: true
+    - cost_exceeded: true
+    - rule_proposal_critical: true
+
+escalation:
+  target: martin
+  format: "3-5 Phronesis-Fragen (L13)"
+  file_pattern: "branch-hub/inbox/to-martin-aswdf-$plan_id-$timestamp.md"
+  escalation_content:
+    - current-iteration-count
+    - o-total-score
+    - decision-reason (STOP_*)
+    - phronesis-questions
+    - proposed-next-step
+
+korpus-training:
+  schedule: "0 */4 * * *"  # every 4h
+  source-dirs:
+    - "Claude-Knowledge-System/SAE-v8/"
+    - "Claude-Knowledge-System/branch-hub/findings/"
+    - "Claude-Vault/canon/blueprints/"
+    - "nlm-library/"
+  risk-ordering: "k0-nearest-first"
+  reward-metric: "rho_delta (plan-quality pre/post)"
+  backfill_target_count: ~250
+  domain_distribution:
+    sae-v8: ~100
+    9os-gui: ~50
+    kpm: ~30
+    heylou: ~20
+    meta-lern-kristall: ~30
+    cape-coral: ~15
+
+audit-trail:
+  log: "branch-hub/audit/aswdf-iterations.jsonl"
+  format: append-only JSONL
+  fields:
+    - timestamp
+    - plan_id
+    - iteration_count
+    - phase_id
+    - phase_output_summary
+    - o_scores (O1-O5)
+    - token_usage
+    - cost_eur
+    - decision (gate)
+
+skills_integration:
+  phase-2-executor: multi-llm-parallel
+  phase-3-nlm: nlm-meta-harness-archon  # DF-06
+  phase-2-adversarial: 4-team-wargame
+  phase-3-gemini: gemini-isolated-retry  # Anti-Kontamination
+  phase-all-audit: ordnung-3-audit-template
+  phase-2-verdict: cross-llm-real
+  phase-8-evolve: dark-factory-evolve
+
+build-roadmap:
+  phase-A:  # Week 1
+    status: design-complete
+    deliverables: [B201-blueprint, cross-llm-review, martin-approval]
+  phase-B:  # Week 2
+    status: pending-build
+    deliverables: [skill-skeleton, phase1-python, phase2-bash, konvergenz-analyzer]
+  phase-C:  # Week 3
+    status: pending-build
+    deliverables: [nlm-integration, nlm-output-extractor, dissent-integration-engine]
+  phase-D:  # Week 4
+    status: pending-build
+    deliverables: [codex-nash-solver, gemini-feedback-loops, claude-synthese-template]
+  phase-E:  # Week 5
+    status: pending-build
+    deliverables: [pattern-extractor-python, korpus-inventory, backfill-scheduler]
+  phase-F:  # Week 6
+    status: pending-build
+    deliverables: [b200-integration-test, martin-quality-review, falsifikations-check]
+  phase-G:  # Week 7+
+    status: pending-build
+    deliverables: [scheduled-cron-4h, monthly-evolve, phronesis-gate-rate-tracking]
+
+falsifikations-bedingungen:
+  shadow-mode-quality-gap:
+    threshold: "<50% manueller Wargames"
+    measurement_window: "3 Monate"
+  o5-plateau:
+    threshold: "O5 < 0.60 bei realen Plaenen"
+    action: architektur-revision
+  martin-phronesis-gate-rate:
+    threshold: ">70%"
+    action: auto-threshold-recalibration
+  cost-exceed:
+    threshold: ">500 EUR/Monat"
+    action: auto-pause
+  korpus-backfill-ineffectiveness:
+    threshold: "keine messbare Config-Verbesserung nach 3 Monaten"
+    action: phase8-revision
+
+# [CRUX-MK]

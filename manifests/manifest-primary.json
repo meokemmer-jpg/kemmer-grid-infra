@@ -1,0 +1,52 @@
+{
+  "role": "primary",
+  "version": "v0.1.0",
+  "description": "Master-PC Kemmer-Grid. Scheduled-Tasks-Owner, NLM-Login, main-push-Berechtigung. NUR EIN Master zulaessig (MR-1 Master-Singleton).",
+  "platform": "windows",
+  "required_clis": [
+    {"name": "python", "min_version": "3.12.0", "admin_required": true, "install_winget": "Python.Python.3.12", "install_choco": "python311", "install_scoop": "python", "assert_cmd": "python --version", "assert_pattern": "Python 3\\.(1[2-9]|[2-9]\\d)"},
+    {"name": "node", "min_version": "20.0.0", "admin_required": true, "install_winget": "OpenJS.NodeJS.LTS", "install_choco": "nodejs-lts", "install_scoop": "nodejs-lts", "assert_cmd": "node --version", "assert_pattern": "v(2[0-9]|[3-9][0-9])\\."},
+    {"name": "git", "min_version": "2.40.0", "admin_required": false, "install_winget": "Git.Git", "install_choco": "git", "install_scoop": "git", "assert_cmd": "git --version", "assert_pattern": "git version 2\\.(4[0-9]|[5-9][0-9])"},
+    {"name": "gh", "min_version": "2.40.0", "admin_required": false, "install_winget": "GitHub.cli", "install_choco": "gh", "install_scoop": "gh", "assert_cmd": "gh --version", "assert_pattern": "gh version 2\\.[4-9]\\d"},
+    {"name": "codex", "min_version": "0.118.0", "admin_required": false, "install_npm": "@openai/codex", "assert_cmd": "codex --version", "assert_pattern": "codex"},
+    {"name": "gemini", "min_version": "0.38.0", "admin_required": false, "install_npm": "@google/gemini-cli", "assert_cmd": "gemini --version", "assert_pattern": "0\\.[3-9]\\d"},
+    {"name": "copilot", "min_version": "1.0.0", "admin_required": false, "install_gh_ext": "github/copilot-cli", "assert_cmd": "copilot --version", "assert_pattern": "Copilot"},
+    {"name": "uv", "min_version": "0.4.0", "admin_required": false, "install_winget": "astral-sh.uv", "assert_cmd": "uv --version", "assert_pattern": "uv 0\\."},
+    {"name": "claude", "min_version": "2.0.0", "admin_required": false, "install_npm": "@anthropic-ai/claude-code", "assert_cmd": "claude --version", "assert_pattern": "Claude Code"}
+  ],
+  "python_packages": [
+    {"name": "sentence-transformers", "min_version": "5.4.0", "install_cmd": "pip install sentence-transformers"},
+    {"name": "playwright", "min_version": "1.58.0", "install_cmd": "pip install playwright && python -m playwright install chromium"},
+    {"name": "notebooklm-py", "min_version": "0.3.4", "install_cmd": "pip install notebooklm-py", "master_only": true}
+  ],
+  "required_env_vars": [
+    {"name": "MACHINE_ROLE", "required_value": "PRIMARY"},
+    {"name": "GEMINI_API_KEY", "required": true, "sensitive": true},
+    {"name": "XAI_API_KEY", "required": false, "sensitive": true},
+    {"name": "OPENAI_API_KEY", "required": false, "sensitive": true},
+    {"name": "ANTHROPIC_API_KEY", "required": false, "sensitive": true, "note": "Claude Max nutzt OAuth, nicht API-Key. Falls Console-API: setzen."},
+    {"name": "ENABLE_PROMPT_CACHING_1H", "required_value": "true", "note": "Gegenmassnahme Anthropic Issue #46829"}
+  ],
+  "required_rules_count": 40,
+  "required_rules_hash_source": "git@github.com:meokemmer-jpg/kemmer-grid-infra#claude-system/rules/",
+  "scheduled_tasks_required": [
+    {"name": "DF-05-auto-commit-push", "schedule": "every 30 min", "critical": true},
+    {"name": "DF-06-NLM-Meta-Harness-Archon", "schedule": "daily 02:00", "critical": true},
+    {"name": "DF-07-model-audit-monthly", "schedule": "1. d. Monats 03:00"},
+    {"name": "DF-08-Weekly-Scan", "schedule": "SUN 04:00"},
+    {"name": "DF-10-token-intelligence-weekly", "schedule": "SAT 03:03"},
+    {"name": "vault-hub-sync-daily", "schedule": "daily 07:00"},
+    {"name": "Claude-Vault-Activity-Stats-Hourly", "schedule": "hourly"},
+    {"name": "kemmer-heartbeat", "schedule": "every 5 min", "new_in_v2": true},
+    {"name": "kemmer-kill-switch-watchdog", "schedule": "every 15 min", "new_in_v2": true, "note": "Prueft API-Cost-Meter, triggert kill-switch.ps1 bei Ueberschreitung"}
+  ],
+  "scheduled_tasks_forbidden": [],
+  "network_requirements": {
+    "outbound": ["api.anthropic.com:443", "api.openai.com:443", "generativelanguage.googleapis.com:443", "api.x.ai:443", "api.github.com:443", "drive.google.com:443", "notebooklm.google.com:443"],
+    "inbound_lan": {"litellm_router": 4000, "claude_mcp": 3000}
+  },
+  "admin_required_steps": ["winget install", "scheduled-task-creation", "firewall-rule-add"],
+  "git_push_rights": ["main", "feature/*", "patch/*"],
+  "nlm_login_allowed": true,
+  "notes": "Primary ist der einzige Node der NLM-Session hosten darf (Google-Account-Limit). Primary macht auto-push des main-Branch. Primary ist Coordinator fuer grid-endpoints.json-Pflege."
+}

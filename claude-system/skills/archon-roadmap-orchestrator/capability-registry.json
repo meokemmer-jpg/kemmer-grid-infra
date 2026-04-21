@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0",
+  "last_update": "2026-04-18T19:30:00+02:00",
+  "registry_ttl_hours": 24,
+  "models": {
+    "claude-opus-4-7-1m": {
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "capabilities": ["meta-reasoning", "long-context", "code-synthesis", "cross-llm-orchestration"],
+      "cost_per_1k_input": 0.015,
+      "cost_per_1k_output": 0.075,
+      "rate_limit_per_min": 50,
+      "typical_use": ["meta-audit", "architecture-decisions", "conflict-resolution"],
+      "last_verified": "2026-04-18T19:00"
+    },
+    "claude-sonnet-4-6": {
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "capabilities": ["code-execution", "analysis", "structured-output"],
+      "cost_per_1k_input": 0.003,
+      "cost_per_1k_output": 0.015,
+      "rate_limit_per_min": 100,
+      "typical_use": ["priorization", "code-analysis", "batch-processing"],
+      "last_verified": "2026-04-18T19:00"
+    },
+    "claude-haiku-4-5": {
+      "provider": "anthropic",
+      "context_window": 200000,
+      "capabilities": ["classification", "extraction", "summarization"],
+      "cost_per_1k_input": 0.0008,
+      "cost_per_1k_output": 0.004,
+      "rate_limit_per_min": 200,
+      "typical_use": ["classification", "dedup-candidate-matching", "routing-decisions"],
+      "last_verified": "2026-04-18T19:00"
+    },
+    "gpt-5-4-codex": {
+      "provider": "openai",
+      "context_window": 200000,
+      "capabilities": ["adversarial-review", "code-analysis", "live-web"],
+      "cost_per_1k_input": 0.005,
+      "cost_per_1k_output": 0.020,
+      "rate_limit_per_min": 20,
+      "rate_limit_per_day": 500,
+      "typical_use": ["cross-llm-wargame", "adversarial-critique", "code-security-review"],
+      "last_verified": "2026-04-18T18:55",
+      "cli_cmd": "codex exec --skip-git-repo-check"
+    },
+    "gemini-2-5-pro": {
+      "provider": "google",
+      "context_window": 1000000,
+      "capabilities": ["adversarial-review", "multi-modal", "long-context"],
+      "cost_per_1k_input": 0.00125,
+      "cost_per_1k_output": 0.005,
+      "rate_limit_per_min": 5,
+      "typical_use": ["cross-llm-wargame", "adversarial-critique", "document-analysis"],
+      "last_verified": "2026-04-18T18:55",
+      "cli_cmd": "gemini -p"
+    },
+    "grok-ultra": {
+      "provider": "xai",
+      "context_window": 256000,
+      "capabilities": ["live-web", "real-time-info"],
+      "cost_per_1k_input": 0.005,
+      "cost_per_1k_output": 0.015,
+      "rate_limit_per_min": 10,
+      "typical_use": ["live-research", "breaking-news-check"],
+      "requires_browser": true,
+      "last_verified": "2026-04-18T17:00"
+    },
+    "perplexity": {
+      "provider": "perplexity",
+      "context_window": 128000,
+      "capabilities": ["live-web", "citation-search"],
+      "rate_limit_per_min": 20,
+      "typical_use": ["live-research", "provider-verification"],
+      "requires_browser": true,
+      "last_verified": "2026-04-18T17:00"
+    }
+  },
+  "task_type_routing": {
+    "meta-audit": {
+      "primary": "claude-opus-4-7-1m",
+      "secondary": ["gpt-5-4-codex", "gemini-2-5-pro"],
+      "never": ["claude-haiku-4-5"]
+    },
+    "classification": {
+      "primary": "claude-haiku-4-5",
+      "secondary": ["claude-sonnet-4-6"],
+      "never": []
+    },
+    "priorization": {
+      "primary": "claude-sonnet-4-6",
+      "secondary": ["claude-opus-4-7-1m"],
+      "never": ["claude-haiku-4-5"]
+    },
+    "code-analysis": {
+      "primary": "claude-sonnet-4-6",
+      "secondary": ["gpt-5-4-codex", "claude-opus-4-7-1m"],
+      "never": []
+    },
+    "cross-llm-wargame": {
+      "primary": "gpt-5-4-codex",
+      "secondary": ["gemini-2-5-pro"],
+      "also_include": ["claude-opus-4-7-1m"],
+      "never": []
+    },
+    "live-research": {
+      "primary": "perplexity",
+      "secondary": ["grok-ultra"],
+      "browser_required": true
+    },
+    "conflict-resolution": {
+      "primary": "claude-opus-4-7-1m",
+      "secondary": [],
+      "escalate_to_martin": true
+    }
+  },
+  "fallback_strategy": "capability-aware",
+  "fallback_rules": {
+    "rate_limit_hit": "backoff-then-alternative-same-capability",
+    "not_downgrade_on_high_prio": true,
+    "max_backoff_seconds": 120,
+    "after_backoff": "escalate-to-martin"
+  }
+}

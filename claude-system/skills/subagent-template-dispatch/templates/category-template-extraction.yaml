@@ -1,0 +1,69 @@
+id: category-template-extraction
+version: 1.0
+crux_mk: true
+subagent_type: general-purpose
+description: Graphity-Book Template-Catalog-Erweiterung (C1-C7 Kategorien)
+
+required_params:
+  - category_id            # z.B. "C6"
+  - category_name          # z.B. "Tech-Manual"
+  - baseline_finding_path  # z.B. "branch-hub/findings/MYZ00011-Templates-Cat-5-Referenziell.md"
+  - line_range             # z.B. "500-700"
+  - myz_id                 # z.B. "MYZ00012"
+
+optional_params:
+  - priority: standard
+  - extra_instructions: ""
+
+prompt_skeleton: |
+  <ROLLE>: Subagent fuer Kategorie-{category_id} {category_name} Template-Extraktion [CRUX-MK].
+
+  <KONTEXT>: Graphity-Book-Framework v1.1.0-live, Template-Catalog-Erweiterung {myz_id}.
+  Finale Registry: G:/Meine Ablage/Claude-Knowledge-System/graphity-registry/
+  Framework-Bibel: branch-hub/findings/B401-Graphity-Book-Production-Meta-Framework.md v1.5
+
+  <BASELINE-PFLICHT-LEKTUERE>:
+    - {baseline_finding_path}
+    - MYZ00006 (Cat-1 Roman) als Kontrast-Baseline
+    - rules/crux.md + rules/coding.md
+
+  <AUFTRAG>: Erstelle Template-Finding {myz_id}-Templates-Cat-{category_id}-{category_name}.md
+    mit T1+T2+T3-Struktur (Triple-Layer-Template).
+    Umfang: {line_range} Zeilen.
+    Pfad: branch-hub/findings/{myz_id}-Templates-Cat-{category_id}-{category_name}.md
+    Frontmatter wie Baseline (category, typclass, primary_lens, secondary_lens).
+
+  <PFLICHT-FELDER>:
+    - template_category: "{category_name}"
+    - typclass: [spine, primary_lens, secondary_lens, global_invariants, forbidden_lenses]
+    - t1_skeleton_structure (rohes Geruest)
+    - t2_skeleton_structure (narrative Verdichtung)
+    - t3_skeleton_structure (final Kaestner-Ton)
+    - cross_ref_patterns (welche Entities, Bucher, Chapter-Contracts)
+    - invariants (min 5 messbare)
+    - kaestner_category_primary (K1, K2, K3, K4, K5)
+    - example_chapter_excerpt (mind 400 Worte Demo-Text)
+
+  <BUDGET>: max 3h, max 50 Reads, Kaestner-Ton.
+  <MELDE AM ENDE>:
+    Pfad: <relative-path>
+    Zeilen: <count>
+    Top-5-Metriken:
+    1. Konkretheits-Index ±0.02
+    2. Parataxe-Haeufigkeit pro K-Klasse
+    3. Cross-Ref-Dichte (Entities/Kapitel)
+    4. Invariant-Count
+    5. Token-Budget (input / output)
+  <EXTRA>: {extra_instructions}
+
+expected_output_structure:
+  - Datei erstellt an {myz_id}-Templates-Cat-{category_id}-*.md
+  - Frontmatter valide
+  - {line_range} Zeilen ±10%
+  - T1+T2+T3 sichtbar getrennt
+
+feedback_config:
+  quality_score_method: rho_gain_estimated
+  min_quality_threshold: 0.7
+  reviewers: [claude_opus_post_dispatch]
+  review_deadline_hours: 48

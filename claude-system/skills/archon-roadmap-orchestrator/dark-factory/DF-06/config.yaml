@@ -1,0 +1,84 @@
+name: DF-06-roadmap-sync
+version: "1.0.0"
+origin: "opus-4.7-METADD 2026-04-18"
+crux_mk: true
+meta_ebene: E3
+status: shadow-mode
+
+# === Scope ===
+scope:
+  input_source: "branch-hub/state/event-log.jsonl + META-ROADMAP.md + REGISTRY.md"
+  output_target: "branch-hub/inbox/to-<branch>.md (live) OR dark-factory/DF-06/shadow/ (shadow)"
+  never_writes_to:
+    - SAE-v8/**
+    - "~/.claude/rules/**"
+    - BEACON.md
+    - BULLETIN.md
+    - "~/.claude/CLAUDE.md"
+    - "Claude-Vault/areas/family/** (K_0/Q_0-sensitive)"
+
+# === Pflicht-Bedingungen (alle 10 erfuellt?) ===
+pflicht_bedingungen:
+  lambda_est: "10-30/Tag (event-driven + 30-Min-Debounce)"
+  narrow_scope: "Nur Roadmap-Management, keine Code-Aenderungen"
+  determinism: "90% Python/Bash, 10% Haiku (uncertainty-gate) + Sonnet (prioritize)"
+  rollback: "git revert < 60s (nur state/ + inbox/ + BEACON touched)"
+  test_coverage: "8/8 Smoke-Tests bestanden (tests/)"
+  k0_protected: "touched NUR META-ROADMAP/state/inbox, nicht Code"
+  q0_measurable: "conflict-count + rho-projection + semantic-dedup-rate"
+  escalation: "2 consecutive fails -> BULLETIN-Alert + Martin-Notification"
+  rho_budget_hardcap: "2 EUR/Run x 10 Runs/Tag = 20 EUR/Tag (HARDCAP 12 via global-optima.json)"
+  audit_trail: "audit/dark-factory.jsonl + token-guard.jsonl + action-log.jsonl"
+
+# === Schedule ===
+schedule:
+  # Light Pass (deterministic, no LLM): alle 30 Min
+  light_pass:
+    interval_min: 30
+    script: |
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/ttl_lease_manager.py sweep
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/collect_roadmap_state.py
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/detect_roadmap_conflicts.py
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/semantic_fingerprint_dedup.py --threshold 0.7
+    max_cost_eur_per_run: 0.0  # pure Python, no LLM
+  # Deep Pass (inkl. Claude-Nodes fuer prioritize + uncertainty-gate): 1x/Tag
+  deep_pass:
+    cron: "0 6 * * *"  # 06:00 daily
+    script: |
+      python C:/Users/marti/.claude/skills/archon-roadmap-orchestrator/scripts/token_guard.py --init --workflow df-06-deep-$(date +%Y%m%d)
+      # full 11-node workflow via archon (wenn installed) oder direkt via model_router+Claude-Call
+    max_cost_eur_per_run: 2.0
+
+# === Shadow-Mode ===
+shadow_mode:
+  active: true
+  flag_file: "dark-factory/DF-06/shadow-mode.flag"
+  target_override: "dark-factory/DF-06/shadow/"
+  decision_volume_threshold: 150  # promote to live nach 150 approved Decisions
+  duration_min_days: 3
+  martin_review_log: "dark-factory/DF-06/review-log.jsonl"
+
+# === Escalation ===
+escalation:
+  fail_counter_file: "dark-factory/DF-06/fail-counter"
+  max_fails: 2
+  on_fail_action: "touch dark-factory/DF-06/DISABLED + BULLETIN-append + Martin-Notification"
+  disabled_file: "dark-factory/DF-06/DISABLED"
+  kill_switch_respected_by: "scheduled-task-firstcheck"
+
+# === CRUX ===
+crux_bindung:
+  K_0: "indirekt (Meta-Fehlentscheidungen -> K_0-Schaden-Reduktion)"
+  Q_0: "direkt (epistemische Integritaet der Roadmap-Koordination)"
+  I_min: "erhoeht (strukturiertes Event-Sourcing + Capability-Registry)"
+  W_0: "effizient via Token-Guard + Debounce"
+
+# === rho-Erwartung ===
+rho_bilanz:
+  cm_eur_per_run: "15-35"
+  lambda_runs_per_day: 10
+  opex_eur_per_run: "0.2-0.8"
+  rho_jaehrlich_eur: "40-80k direkt + 80-150k cascade = 120-230k gesamt"
+
+# === optima-ref ===
+optima_ref: "global-optima.json#pending-propagation"

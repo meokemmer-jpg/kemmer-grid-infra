@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Orchestrator-Event",
+  "description": "Append-only Event-Log Entry fuer den Roadmap-Orchestrator",
+  "type": "object",
+  "required": ["event_id", "ts", "branch", "event_type", "payload"],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^evt-[0-9a-f]{12}$",
+      "description": "Eindeutige Event-ID (UUID-Kurzform)"
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 Timestamp with timezone"
+    },
+    "branch": {
+      "type": "string",
+      "description": "Source-Branch (METADD, METAOPS, Work-C1, etc.)"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "task-created",
+        "task-claimed",
+        "task-progress",
+        "task-completed",
+        "task-blocked",
+        "task-failed",
+        "lease-renewed",
+        "lease-expired",
+        "conflict-detected",
+        "dedup-candidate",
+        "budget-breach",
+        "sla-breach",
+        "priority-changed",
+        "reconciliation",
+        "martin-override"
+      ]
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Referenz auf Roadmap-Task (M1, O1a, etc.) oder null fuer nicht-task-Events"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Event-spezifische Daten"
+    },
+    "parent_event_id": {
+      "type": "string",
+      "description": "Referenz fuer Event-Kausal-Kette"
+    },
+    "semantic_fingerprint": {
+      "type": "string",
+      "description": "Hash aus Task-Beschreibung + Deps fuer Dedup"
+    }
+  }
+}

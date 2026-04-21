@@ -1,0 +1,42 @@
+﻿{
+  "conflicts": [
+    {
+      "kind": "duplicate",
+      "task_id": "M1b",
+      "details": "fingerprint-match with M1"
+    },
+    {
+      "kind": "duplicate",
+      "task_id": "O1a",
+      "details": "fingerprint-match with M1"
+    },
+    {
+      "kind": "duplicate",
+      "task_id": "M2",
+      "details": "fingerprint-match with M1"
+    },
+    {
+      "kind": "duplicate",
+      "task_id": "M3",
+      "details": "fingerprint-match with M1"
+    },
+    {
+      "kind": "duplicate",
+      "task_id": "M4",
+      "details": "fingerprint-match with M1"
+    },
+    {
+      "kind": "duplicate",
+      "task_id": "M5",
+      "details": "fingerprint-match with M1"
+    },
+    {
+      "kind": "budget-breach",
+      "branch": "Opus47-METADD",
+      "details": "rho_sum 230000 > cap 100000"
+    }
+  ],
+  "summary": "7 conflicts detected.",
+  "severity": "mid"
+}
+

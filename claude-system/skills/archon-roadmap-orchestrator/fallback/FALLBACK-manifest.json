@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "comment": "Zentraler Manifest fuer alle FALLBACK-Routinen. Jede Routine ist klar als FALLBACK markiert. Wenn ein Fallback N-mal nicht getriggert wurde, wird er zum Deletion-Kandidaten. FALLBACK-retention-sweep.py prueft monatlich und schlaegt Loeschungen vor.",
+  "retention_policy": {
+    "min_successful_runs_without_trigger": 30,
+    "min_days_active": 30,
+    "auto_delete": false,
+    "require_martin_approval_for_deletion": true,
+    "notify_via": "branch-hub/BULLETIN.md"
+  },
+  "fallbacks": {
+    "FALLBACK-pwsh-to-powershell": {
+      "file": "N/A (live in df06-*.ps1 tasks registered with powershell.exe)",
+      "type": "compatibility-shim",
+      "reason": "pwsh.exe (PS 7) ist standardmaessig nicht installiert auf Windows; powershell.exe (5.1) ist immer da.",
+      "triggered_count": 1,
+      "success_count_without_this_fallback": 0,
+      "created_at": "2026-04-18T20:25",
+      "to_delete_when": "pwsh.exe system-wide installed AND tasks erfolgreich 30x mit pwsh",
+      "deletion_command": "Re-register tasks with pwsh.exe + remove this entry"
+    },
+    "FALLBACK-detect-empty-title-skip": {
+      "file": "fallback/FALLBACK-detect-empty-title-patch.py",
+      "type": "bug-workaround",
+      "reason": "detect_roadmap_conflicts collide false-positive bei Tasks ohne title-Feld (fingerprint(empty, []) == same-hash). In Production mit echten Titeln nicht relevant.",
+      "triggered_count": 0,
+      "success_count_without_this_fallback": 0,
+      "created_at": "2026-04-18T20:26",
+      "to_delete_when": "30 successful Light-Pass-Runs mit echten Task-Titeln UND detect_roadmap_conflicts.py patched upstream",
+      "deletion_command": "1. Patch detect_roadmap_conflicts.py: skip tasks ohne title. 2. Remove this file. 3. Update manifest."
+    },
+    "FALLBACK-codex-to-gemini-router": {
+      "file": "fallback/FALLBACK-codex-to-gemini-router.sh",
+      "type": "provider-fallback",
+      "reason": "Codex (GPT-5.4) hat Windows-Sandbox-Probleme bei UNC-Pfaden (CreateProcessAsUserW failed 1920). Wenn Codex 2x in Folge failed, routet auf Gemini.",
+      "triggered_count": 2,
+      "success_count_without_this_fallback": 0,
+      "created_at": "2026-04-18T20:26",
+      "to_delete_when": "Codex Windows-Sandbox-Bug gefixt UND 30 Codex-Runs ohne Sandbox-Fehler",
+      "deletion_command": "1. Test Codex 30x ohne Fehler. 2. Remove this script. 3. Update manifest."
+    },
+    "FALLBACK-global-optima-defaults": {
+      "file": "fallback/FALLBACK-global-optima-defaults.py",
+      "type": "config-default",
+      "reason": "Wenn global-optima.json fehlt oder korrupt, liefert dieses Script die Default-Werte. Verhindert Crash bei Config-Problem.",
+      "triggered_count": 0,
+      "success_count_without_this_fallback": 0,
+      "created_at": "2026-04-18T20:27",
+      "to_delete_when": "global-optima.json stabil persisted UND Backup-Strategie etabliert UND 30 Runs ohne Config-Loss",
+      "deletion_command": "Remove after backup-strategy is in place."
+    }
+  },
+  "sweep_history": [
+    {
+      "ts": "2026-04-18T18:31:11.967891+00:00",
+      "n_candidates": 0,
+      "n_active": 4
+    }
+  ]
+}

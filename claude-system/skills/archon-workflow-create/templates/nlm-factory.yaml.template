@@ -1,0 +1,80 @@
+name: {{WORKFLOW_NAME}}
+description: |
+  Use when: NLM-Factory-Loop fuer {{DOMAIN}} Topic-Hardening.
+  Triggers: "{{TRIGGERS}}"
+  Does: 8-Schritt rekursiver Loop (NLM-Read + Multilevel-Research + Wargame +
+        Self-Challenge + Findings + Maintenance + Skill-Update).
+  Output: branch-hub/nlm-library/{{DOMAIN}}/<slug>-<date>.md + NLM-Quellen
+
+  [CRUX-MK] Cross-LLM-Mandate = mind. 2 Non-Claude-Nodes. Cost-Budget hoch (Multi-LLM).
+
+provider: claude
+model: sonnet
+
+nodes:
+  - id: crux-gate
+    bash: |
+      python "G:/Meine Ablage/Claude-Knowledge-System/branch-hub/.archon/scripts/crux-validate.py" \
+        --thesis "$ARGUMENTS" --artifacts "$ARTIFACTS_DIR"
+
+  - id: budget-init
+    depends_on: [crux-gate]
+    bash: |
+      echo '{"tokens_consumed":0,"tokens_budget":{{BUDGET_TOKENS}},"cost_eur_budget":{{BUDGET_EUR}},"started":"'$(date -Iseconds)'"}' > "$ARTIFACTS_DIR/budget.json"
+
+  - id: step1-nlm-read
+    depends_on: [budget-init]
+    prompt: |
+      Schritt 1: Lies relevante NotebookLM-Quellen fuer {{DOMAIN}}.
+      Thesis: $ARGUMENTS
+      Read: nlm-library/{{DOMAIN}}/*.md
+      Extract Kern-Claims + offene Fragen.
+      Write: $ARTIFACTS_DIR/step1-nlm-summary.md
+    allowed_tools: [Read, Glob, Grep, Write]
+
+  - id: step2-research-claude
+    depends_on: [step1-nlm-read]
+    prompt: |
+      Schritt 2a: Multilevel-Research aus Claude-Perspektive.
+      Read: $ARTIFACTS_DIR/step1-nlm-summary.md
+      Write: $ARTIFACTS_DIR/step2-research-claude.md
+    allowed_tools: [Read, Write, WebSearch]
+
+  # TODO: step2-research-gemini + step2-research-gpt (external_llm wenn PI-Support)
+
+  - id: step3-wargame
+    depends_on: [step2-research-claude]
+    bash: |
+      archon workflow run learning-wargame --branch "sub/${RANDOM}" \
+        "$(cat "$ARTIFACTS_DIR/step1-nlm-summary.md" | head -1)" \
+        2>&1 | tee "$ARTIFACTS_DIR/step3-wargame.log"
+
+  - id: step4-self-challenge
+    depends_on: [step3-wargame]
+    prompt: |
+      Schritt 4: Self-Challenge. Delta gegen bestehendes Wissen.
+      Read all previous artifacts.
+      Write: $ARTIFACTS_DIR/step4-deltas.md
+    allowed_tools: [Read, Write, Glob, Grep]
+
+  - id: step5-findings
+    depends_on: [step4-self-challenge]
+    prompt: |
+      Schritt 5: Konsolidierte Findings + Consensus-Score.
+      Write: $ARTIFACTS_DIR/step5-findings.md
+    allowed_tools: [Read, Write, Glob, Grep]
+
+  - id: budget-check
+    depends_on: [step5-findings]
+    bash: |
+      python "G:/Meine Ablage/Claude-Knowledge-System/branch-hub/.archon/scripts/rho-budget-check.py" --artifacts "$ARTIFACTS_DIR"
+
+  - id: step8-write-finding
+    depends_on: [budget-check]
+    bash: |
+      DATE=$(date -Iseconds | cut -d'T' -f1)
+      SLUG=$(echo "$ARGUMENTS" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:] -' | tr ' ' '-' | cut -c1-40)
+      TARGET="G:/Meine Ablage/Claude-Knowledge-System/branch-hub/findings/NLM-{{DOMAIN_UPPER}}-${SLUG}-${DATE}.md"
+      cp "$ARTIFACTS_DIR/step5-findings.md" "$TARGET"
+      echo "{\"ts\":\"$(date -Iseconds)\",\"branch\":\"archon-{{WORKFLOW_NAME}}\",\"action\":\"WRITE\",\"target\":\"$TARGET\",\"reason\":\"archon-workflow:{{WORKFLOW_NAME}}\",\"source\":\"archon\"}" >> "G:/Meine Ablage/Claude-Knowledge-System/branch-hub/audit/action-log.jsonl"
+      echo "WROTE: $TARGET"

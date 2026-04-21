@@ -1,0 +1,88 @@
+name: {{WORKFLOW_NAME}}
+description: |
+  Use when: User wants to run a 5-team wargame on thesis "{{DOMAIN}}".
+  Triggers: "{{TRIGGERS}}"
+  Does: 5-team adversarial wargame with fresh-session nodes (Red/Blue/Purple/Gray),
+        CRUX-gate start, budget-stop, cross-LLM mandate (optional external_llm nodes),
+        human-in-the-loop verdict. Output = WARGAME-CARD.
+  Output: branch-hub/findings/WARGAME-{{DOMAIN_UPPER}}-<slug>-<date>.md
+  NOT for: Code-fixes, PR-reviews, bug-reports.
+
+  [CRUX-MK] rho-aligned. Bounded Autonomy (Level 4).
+
+provider: claude
+model: sonnet
+
+nodes:
+  - id: crux-gate
+    bash: |
+      python "G:/Meine Ablage/Claude-Knowledge-System/branch-hub/.archon/scripts/crux-validate.py" \
+        --thesis "$ARGUMENTS" --artifacts "$ARTIFACTS_DIR"
+
+  - id: budget-init
+    depends_on: [crux-gate]
+    bash: |
+      echo '{"tokens_consumed":0,"tokens_budget":{{BUDGET_TOKENS}},"cost_eur_budget":{{BUDGET_EUR}},"started":"'$(date -Iseconds)'"}' > "$ARTIFACTS_DIR/budget.json"
+
+  - id: red-team
+    depends_on: [budget-init]
+    prompt: |
+      You are RED TEAM for {{DOMAIN}} thesis: $ARGUMENTS
+      Domain-specific context: {{DOMAIN_CONTEXT}}
+      Identify 6-10 attacks, classify severity, honor CRUX (K_0/Q_0/I_min).
+      Write JSON to $ARTIFACTS_DIR/red-team.json:
+      {"attacks":[{"id":"R1","title":"...","severity":"CRITICAL|HIGH|MEDIUM|LOW","scenario":"...","impact_eur_per_year":0}]}
+    allowed_tools: [Read, Write, Glob, Grep]
+
+  - id: blue-team
+    depends_on: [red-team]
+    prompt: |
+      You are BLUE TEAM. Defend thesis against: $ARTIFACTS_DIR/red-team.json
+      For each attack: concrete defense (not aspirational). Mark Martin-approval-required items.
+      Write $ARTIFACTS_DIR/blue-team.json:
+      {"defenses":[{"against":"R1","id":"B1","defense":"...","rho_eur_per_year":0,"requires_approval":false}]}
+    allowed_tools: [Read, Write, Glob, Grep]
+
+  - id: purple-synthesis
+    depends_on: [red-team, blue-team]
+    model: opus
+    prompt: |
+      You are PURPLE TEAM. Synthesize Red/Blue into Best Practices that survive attacks.
+      Read $ARTIFACTS_DIR/red-team.json + blue-team.json
+      Write $ARTIFACTS_DIR/purple.json with 5-8 falsifiable BPs.
+    allowed_tools: [Read, Write, Glob, Grep]
+
+  - id: gray-team
+    depends_on: [purple-synthesis]
+    prompt: |
+      You are GRAY TEAM: third-order effects at 6-24 months.
+      Read $ARTIFACTS_DIR/purple.json
+      Consider: scale, tool-lock-in, model-drift, obsolescence.
+      Write 3-6 concerns + mitigations to $ARTIFACTS_DIR/gray-team.json
+    allowed_tools: [Read, Write]
+
+  - id: budget-check
+    depends_on: [gray-team]
+    bash: |
+      python "G:/Meine Ablage/Claude-Knowledge-System/branch-hub/.archon/scripts/rho-budget-check.py" --artifacts "$ARTIFACTS_DIR"
+
+  - id: verdict
+    depends_on: [budget-check]
+    model: opus
+    prompt: |
+      Issue verdict: HARDENED / CONDITIONAL / REJECTED based on all team outputs.
+      Read ALL JSONs in $ARTIFACTS_DIR.
+      Single-Agent ceiling = CONDITIONAL (H(A)=0).
+      Write Wargame-Card to $ARTIFACTS_DIR/wargame-card.md.
+      Use WARGAME-*.md format. Include [CRUX-MK] marker.
+    allowed_tools: [Read, Write, Glob, Grep]
+
+  - id: write-finding
+    depends_on: [verdict]
+    bash: |
+      DATE=$(date -Iseconds | cut -d'T' -f1)
+      SLUG=$(echo "$ARGUMENTS" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:] -' | tr ' ' '-' | cut -c1-40)
+      TARGET="G:/Meine Ablage/Claude-Knowledge-System/branch-hub/findings/WARGAME-{{DOMAIN_UPPER}}-${SLUG}-${DATE}.md"
+      cp "$ARTIFACTS_DIR/wargame-card.md" "$TARGET"
+      echo "{\"ts\":\"$(date -Iseconds)\",\"branch\":\"archon-{{WORKFLOW_NAME}}\",\"action\":\"WRITE\",\"target\":\"$TARGET\",\"reason\":\"archon-workflow:{{WORKFLOW_NAME}}\",\"source\":\"archon\"}" >> "G:/Meine Ablage/Claude-Knowledge-System/branch-hub/audit/action-log.jsonl"
+      echo "WROTE: $TARGET"

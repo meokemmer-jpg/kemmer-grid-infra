@@ -1,0 +1,127 @@
+# Archon-Workflow: github-bauplan-publish [CRUX-MK]
+# Version: 1.0.0
+# Meta-Ebene: E3
+# Created: 2026-04-19
+
+workflow:
+  id: github-bauplan-publish
+  name: GitHub Bauplan/Finding Publisher
+  tier: 1
+  executor-priority:
+    primary: claude
+    fallback: copilot
+    rationale: "Orchestrierung+Klassifikation Claude; git-Ops via shell"
+
+triggers:
+  manual:
+    - "publish bauplan"
+    - "github push blueprint"
+    - "share finding on git"
+    - "publish to kemmer-knowledge-system"
+  automatic:
+    - event: PostWrite
+      pattern: "branch-hub/cross-llm/*.md"
+      condition: "frontmatter.verdict in [CROSS-LLM-2OF3-HARDENED, HARDENED, HARDENED-PRODUCTION]"
+    - event: PostWrite
+      pattern: "Claude-Vault/canon/blueprints/B*.md"
+      condition: "frontmatter.status == 'APPROVED' AND frontmatter.publish == true"
+
+dependencies:
+  tools:
+    - gh (GitHub CLI, auth via gh auth login)
+    - git (>= 2.40)
+    - powershell.exe (Windows Env)
+  env-vars:
+    - GITHUB_REPO: meokemmer-jpg/kemmer-knowledge-system
+    - REPO_LOCAL: /tmp/kks-repo
+  permissions:
+    - Bash(git *)
+    - Bash(gh *)
+    - Bash(cp *)
+    - Bash(mkdir -p *)
+    - Read
+
+nodes:
+  - id: phase-1-classify
+    type: executor
+    executor: claude
+    input: source-file-path
+    output: target-repo-path
+    logic: |
+      IF path matches "Claude-Vault/canon/blueprints/B*.md": target = blueprints/
+      ELIF path matches "branch-hub/findings/*.md": target = findings/
+      ELIF path matches "branch-hub/cross-llm/*.md": target = cross-llm/
+      ELIF path matches "*.py|*.ts|*.js|*.sh": target = code/<domain>/
+      ELIF path matches ".claude/skills/*": target = skills/  # martin-approval Pflicht
+      ELIF path matches ".claude/rules/*": target = rules/    # martin-approval Pflicht
+      ELSE: error "Unknown file type"
+    on-error: stop
+
+  - id: phase-2-preflight
+    type: cli-executor
+    depends-on: phase-1-classify
+    checks:
+      - gh-auth-check: "gh auth status"
+      - repo-clone-exists: "test -d $REPO_LOCAL"
+      - repo-pull-latest: "cd $REPO_LOCAL && git pull --rebase origin main"
+      - file-size-cap: "test $(stat -c%s <file>) -lt 512000 OR warn"
+      - secrets-scan: "grep -E 'API_KEY|SECRET|TOKEN|PASSWORD|PRIVATE_KEY' <file> && fail"
+      - target-dir-exists: "mkdir -p $REPO_LOCAL/<target>"
+    on-error: stop
+
+  - id: phase-3-stage
+    type: cli-executor
+    depends-on: phase-2-preflight
+    actions:
+      - copy: "cp <source> $REPO_LOCAL/<target>/"
+      - optional-frontmatter-update:
+          field: status
+          value: "PUBLISHED-TO-GITHUB"
+          timestamp: true
+      - stage: "cd $REPO_LOCAL && git add <target>"
+    on-error: rollback
+
+  - id: phase-4-commit-push
+    type: cli-executor
+    depends-on: phase-3-stage
+    actions:
+      - commit-message-template: "[<branch>] <type>: <short-title> (<date>)"
+      - commit-body-from-frontmatter:
+          lines: 3
+          extract: [title, verdict, rho_impact]
+      - commit: "cd $REPO_LOCAL && git commit -F <message-file>"
+      - push: "cd $REPO_LOCAL && git push origin main"
+      - force-push-guard: "NEVER --force on main"
+    on-error: rollback-local
+
+  - id: phase-5-report
+    type: executor
+    executor: claude
+    depends-on: phase-4-commit-push
+    outputs:
+      - commit-hash
+      - github-url: "https://github.com/$GITHUB_REPO/commit/<hash>"
+      - beacon-draft: "GitHub push: <title> -> <url>"
+      - optional-issue-draft: "If frontmatter.discussion_required == true"
+    on-error: log-to-audit
+
+error-handling:
+  global-rollback:
+    - "cd $REPO_LOCAL && git reset --hard HEAD~1 (only if not pushed)"
+    - "cd $REPO_LOCAL && git stash (if staged but not committed)"
+  audit-log: "G:/Meine Ablage/Claude-Knowledge-System/branch-hub/audit/github-publish.jsonl"
+
+crux-check:
+  K_0: "Secrets-Scan verhindert Token-/Credential-Leaks"
+  Q_0: "Frontmatter-Validierung sichert Konsistenz"
+  I_min: "Strukturierte 5-Phasen-Publikation"
+  W_0: "Martin-Zeit: 1 Befehl statt 5-7 Min manuelles git"
+
+rho-estimate:
+  setup-cost: "2h einmalig"
+  per-run-cost: "~30s (automatisch) vs 5-7 Min manuell"
+  lambda-expected: "5-15 Publikationen/Monat"
+  break-even: "1 Monat"
+  annual-gain: "10-30k EUR + 50-200k Option-Wert"
+
+[CRUX-MK]
