@@ -1,4 +1,21 @@
 #!/usr/bin/env bash
+# [CRUX-MK] Layer 0
+# rho-Impact: +5-30k EUR/J je nach Rolle
+# K_0/Q_0/I_min: geschuetzt via Admission-Gate + Capability-Suite
+# Wargame-Status: alignment_passed (Masterplan v2)
+# Pre-Check: crux-check.sh wird als erste Aktion invoked
+
+# === LAYER 0: CRUX-MK-Gate ===
+SCRIPT_DIR="$(dirname "$0")"
+if [ -x "$SCRIPT_DIR/crux-check.sh" ]; then
+  sh "$SCRIPT_DIR/crux-check.sh"     --action "grid-bootstrap start"     --estimated-rho "+5000-30000 EUR/J (role-dependent infrastructure deploy)"     --k0-risk low --q0-risk low --i-min positive --l-martin positive     --wargame alignment_passed --stage "bootstrap-entry" || {
+    echo "[grid-bootstrap] CRUX-Gate verweigert Bootstrap. Abbruch."
+    exit 1
+  }
+else
+  echo "[grid-bootstrap] WARN: crux-check.sh nicht gefunden. CRUX-Layer-0 inactive." >&2
+fi
+# === END LAYER 0 ===
 # Idempotenter Grid-Bootstrap fuer Mac/Linux.
 set -euo pipefail
 

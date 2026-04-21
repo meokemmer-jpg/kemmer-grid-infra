@@ -1,7 +1,19 @@
 {
+  "crux_mk": true,
+  "crux_version": "v1.0",
+  "crux_impact": {
+    "rho_estimate_eur_per_year": "+30000-80000 (Orchestration-Hub ermoeglicht Grid-Gesamt-rho)",
+    "k0_protection": "high (Master-Singleton verhindert Capital-Zerstoerung durch Parallel-Push)",
+    "q0_protection": "high (NLM-Login-Sicherung, Canon-Integritaet)",
+    "i_min_contribution": "very_positive (zentrale Governance-Instanz)",
+    "l_martin_impact": "positive (Martin-Engpass entlastet durch Delegation)",
+    "t_life_impact_days": 0,
+    "wargame_status": "alignment_passed (Masterplan v2)",
+    "crux_mandatory": "Aktiviert bei jedem Bootstrap-Schritt durch scripts/crux-check.{sh,ps1}"
+  },
   "role": "primary",
   "version": "v0.1.0",
-  "description": "Master-PC Kemmer-Grid. Scheduled-Tasks-Owner, NLM-Login, main-push-Berechtigung. NUR EIN Master zulaessig (MR-1 Master-Singleton).",
+  "description": "Master-PC Kemmer-Grid. Scheduled-Tasks-Owner, NLM-Login, main-push-Berechtigung. NUR EIN Master zulaessig (MR-1 Master-Singleton). [CRUX-MK] Layer 0 aktiv.",
   "platform": "windows",
   "required_clis": [
     {"name": "python", "min_version": "3.12.0", "admin_required": true, "install_winget": "Python.Python.3.12", "install_choco": "python311", "install_scoop": "python", "assert_cmd": "python --version", "assert_pattern": "Python 3\\.(1[2-9]|[2-9]\\d)"},

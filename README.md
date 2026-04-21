@@ -4,6 +4,35 @@
 
 Versionierte Infrastruktur-Definition fuer 3 Windows-PCs + 1 Mac M5 Max (spaeter). Single Source of Truth fuer Manifeste, Bootstrap-Scripts, Kill-Switch, Golden Task Suite, LLM-Router-Config, Rules-System.
 
+---
+
+## 0. LAYER 0 — CRUX-MK (nicht verhandelbar, aktiv verankert)
+
+**Jede Aktion in diesem Grid dient:**
+
+```
+max INTEGRAL_{t=0}^{T_life} [ rho(a,t) * L(t) ] dt
+```
+
+- **rho(a,t)** = CM * Lambda(a,t) - OPEX(a,t) - h * Lambda(a,t) * W(a,t) (Vermoegens-Wachstum zeitnormiert)
+- **L(t)** = Lebensqualitaets-Faktor [0,1] (Gesundheit, Familie, Freiheit)
+- **T_life** = Lebenserwartung (zu MAXIMIEREN)
+- **Nebenbedingungen invariant:** K >= K_0 (Kapital), Q >= Q_0 (Qualitaet), I >= I_min (Ordnung)
+
+**Mechanische Durchsetzung:**
+- `scripts/crux-check.{sh,ps1}` wird VOR jedem Bootstrap-Schritt, Commit, LLM-Call aufgerufen
+- Manifeste haben `crux_mk: true` + `crux_impact` Pflichtfeld
+- Scripts tragen `[CRUX-MK]` Header und invoken crux-check
+- Git pre-commit-hook prueft CRUX-Marker in Commit-Messages
+- LiteLLM-Router hat `crux-precall-hook.py` als pre-call Callback
+- Golden-Task T00: CRUX-Compliance-Test vor allem anderen
+
+**Bei Verletzung einer Nebenbedingung:** automatisches No-Go unabhaengig von rho.
+
+**Vollstaendige Details:** `CRUX-MK.md` im Repo-Root.
+
+---
+
 ## Schnellstart
 
 ### Mac M5 Max (Local-Inference-Node)

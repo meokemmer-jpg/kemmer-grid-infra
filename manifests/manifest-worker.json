@@ -1,7 +1,19 @@
 {
+  "crux_mk": true,
+  "crux_version": "v1.0",
+  "crux_impact": {
+    "rho_estimate_eur_per_year": "+5000-15000 pro Worker (Delegate-Parallelisierung, Worker-E und Worker-F kumuliert +10-30k)",
+    "k0_protection": "medium (Feature-Branch-only-Push, kein main-Destructive-Access)",
+    "q0_protection": "high (Capability-Gate vor produktiver Arbeit, kein Canon-Drift)",
+    "i_min_contribution": "positive (Lane-Reservierung + Admission-Gate)",
+    "l_martin_impact": "positive (parallele Arbeit entlastet Martin, wenn Coordinator-Overhead <Worker-Output)",
+    "t_life_impact_days": 0,
+    "wargame_status": "alignment_passed (Masterplan v2, Loopback-Audit gehaertete Version)",
+    "crux_mandatory": "scripts/crux-check.{sh,ps1} wird bei jedem Install-Schritt und vor jedem LLM-Call invoked"
+  },
   "role": "worker",
   "version": "v0.1.0",
-  "description": "Windows-Worker-PC. Delegate-Orchestrator fuer Copilot/Codex/Gemini/Grok-Calls. Kein Master-Task. Nur Feature-Branch-Push.",
+  "description": "Windows-Worker-PC. Delegate-Orchestrator fuer Copilot/Codex/Gemini/Grok-Calls. Kein Master-Task. Nur Feature-Branch-Push. [CRUX-MK] Layer 0 aktiv.",
   "platform": "windows",
   "required_clis": [
     {"name": "python", "min_version": "3.12.0", "admin_required": true, "install_winget": "Python.Python.3.12"},

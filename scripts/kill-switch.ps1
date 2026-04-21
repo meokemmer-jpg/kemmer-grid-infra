@@ -1,4 +1,5 @@
 #!/usr/bin/env pwsh
+# [CRUX-MK] Layer 0 — Script traegt CRUX-Marker (siehe CRUX-MK.md)
 # Deterministischer Kill-Switch fuer Windows.
 $ErrorActionPreference = 'Stop'
 

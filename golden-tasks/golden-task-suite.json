@@ -1,13 +1,27 @@
 {
-  "schema_version": "v0.1.0",
-  "description": "12 deterministische Capability-Tests fuer Worker-Admission in Kemmer-Grid. Masterplan v2 Patch P4: ersetzt Hash-Match-Admission-Gate durch funktional evidenzbasierte Capability-Pruefung.",
+  "crux_mk": true,
+  "crux_version": "v1.0",
+  "schema_version": "v0.2.0",
+  "description": "13 Capability-Tests fuer Worker-Admission in Kemmer-Grid. T00 = CRUX-MK-Layer-0-Check (Pflicht-Gate). T01-T12 = Funktional-Tests (Masterplan v2 Patch P4).",
   "admission_pass_criteria": {
-    "required_tasks_passed": 10,
-    "total_tasks": 12,
+    "required_tasks_passed": 11,
+    "total_tasks": 13,
+    "crux_t00_mandatory": "T00 MUSS passen. Ohne T00 = Admission DENIED unabhaengig von anderen.",
     "max_median_latency_seconds": 60,
     "max_failures_per_hour": 2
   },
   "tasks": [
+    {
+      "id": "T00",
+      "description": "[CRUX-MK] Layer-0-Check: scripts/crux-check.sh/.ps1 exists + executable + gibt Exit-0 fuer neutrale Test-Aktion",
+      "command_windows": "pwsh -File scripts\\crux-check.ps1 -Action 'golden-task-check' -EstimatedRho '+0 (test only)' -K0Risk none -Q0Risk none -IMin neutral -LMartin neutral -Wargame alignment_passed -DryRun",
+      "command_unix": "sh scripts/crux-check.sh --action 'golden-task-check' --estimated-rho '+0 (test only)' --k0-risk none --q0-risk none --i-min neutral --l-martin neutral --wargame alignment_passed --dry-run",
+      "pass_pattern": "VERDICT: PASS",
+      "max_latency_seconds": 5,
+      "required_tools": [],
+      "mandatory": true,
+      "crux_significance": "Pflicht-Gate. Wenn T00 nicht passt, ist die ganze Maschine nicht CRUX-aligned = nicht admission-faehig."
+    },
     {
       "id": "T01",
       "description": "Git-Clone + File-List funktioniert",

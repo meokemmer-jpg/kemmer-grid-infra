@@ -1,4 +1,27 @@
 #!/usr/bin/env pwsh
+# [CRUX-MK] Layer 0
+# rho-Impact: +5-30k EUR/J je nach Rolle
+# K_0/Q_0/I_min: geschuetzt via Admission-Gate + Capability-Suite
+# Wargame-Status: alignment_passed (Masterplan v2)
+# Pre-Check: crux-check.ps1 wird als erste Aktion invoked
+
+# === LAYER 0: CRUX-MK-Gate ===
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$CruxScript = Join-Path $ScriptDir 'crux-check.ps1'
+if (Test-Path $CruxScript) {
+  & pwsh -File $CruxScript `
+    -Action 'grid-bootstrap start' `
+    -EstimatedRho '+5000-30000 EUR/J (role-dependent infrastructure deploy)' `
+    -K0Risk low -Q0Risk low -IMin positive -LMartin positive `
+    -Wargame alignment_passed -Stage 'bootstrap-entry'
+  if ($LASTEXITCODE -eq 1) {
+    Write-Error '[grid-bootstrap] CRUX-Gate verweigert Bootstrap. Abbruch.'
+    exit 1
+  }
+} else {
+  Write-Warning '[grid-bootstrap] crux-check.ps1 nicht gefunden. CRUX-Layer-0 inactive.'
+}
+# === END LAYER 0 ===
 # Idempotenter Grid-Bootstrap fuer Windows.
 [CmdletBinding()]
 param(

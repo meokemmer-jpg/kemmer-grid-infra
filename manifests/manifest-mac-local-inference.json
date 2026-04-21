@@ -1,7 +1,20 @@
 {
+  "crux_mk": true,
+  "crux_version": "v1.0",
+  "crux_impact": {
+    "rho_estimate_eur_per_year": "+6000-24000 (Cloud-API-Cost-Ersparnis via lokale Inferenz fuer Routine-Tasks)",
+    "k0_protection": "medium (Hardware-Investment 2500-3500 EUR einmalig, Break-Even 6-12 Monate)",
+    "q0_protection": "high (Daten-Lokalitaet fuer K_0/Q_0-sensitive Tasks, kein Cloud-Leak)",
+    "i_min_contribution": "positive (Tier-3-Redundanz im LLM-Grid, Fallback-Option)",
+    "l_martin_impact": "very_positive (Privacy-Dimension fuer Familien-Daten, reduziert Martin-Sorgen)",
+    "t_life_impact_days": 0,
+    "wargame_status": "alignment_passed (Masterplan v2: Mac = Phase 3, nicht Phase 1)",
+    "crux_mandatory": "crux-check.sh vor jedem Ollama-Call und vor LAN-Publish",
+    "daten_souveraenitaet": "Familien-Daten (Gesundheit, Finanzen) gehen NIEMALS Cloud, nur lokal via Gemma2-27B"
+  },
   "role": "local-inference",
   "version": "v0.1.0",
-  "description": "Mac M5 Max Local-Inference-Node. Ollama mit Gemma2-27B als LAN-Endpoint. Tier-3-LLM-Tier. Entlastet Cloud-APIs fuer Routine-Tasks.",
+  "description": "Mac M5 Max Local-Inference-Node. Ollama mit Gemma2-27B als LAN-Endpoint. Tier-3-LLM-Tier. Entlastet Cloud-APIs fuer Routine-Tasks. [CRUX-MK] Layer 0 aktiv mit Daten-Souveraenitaets-Fokus.",
   "platform": "macos",
   "required_clis": [
     {"name": "brew", "install_cmd": "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"", "assert_cmd": "brew --version"},

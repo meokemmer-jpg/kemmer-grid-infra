@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# [CRUX-MK] Layer 0 — Script traegt CRUX-Marker (siehe CRUX-MK.md)
 # Standalone-Diagnose fuer Mac/Linux.
 set -euo pipefail
 

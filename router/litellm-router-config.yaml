@@ -1,7 +1,30 @@
-# LiteLLM Router Config fuer Kemmer-Grid [CRUX-MK]
+# LiteLLM Router Config fuer Kemmer-Grid [CRUX-MK] Layer 0
 # 4-Tier-LLM-Routing mit Criticality-Budgeting (nicht Token-Cap)
 # Claude-Opus strikt als Arbitration (K_0/Q_0/Phronesis)
 # Lokale Modelle (Mac) fuer Routine
+#
+# CRUX-MK Layer-0-Verankerung:
+# - Jeder Call geht durch scripts/crux-precall-hook.py (callbacks unten)
+# - criticality_score wird berechnet aus task-metadata.tags
+# - rho-Impact wird geloggt in ~/.kemmer-grid/rho-tracking.jsonl
+# - Kill-Switch-Check vor jedem Call (verhindert Cost-Explosion)
+
+crux_mk: true
+crux_version: "v1.0"
+crux_impact:
+  rho_estimate_eur_per_year: "+5000-20000 (Router entlastet direkte Opus-Calls, Criticality-Budgeting verhindert Fehl-Routing)"
+  k0_protection: "high (Opus-Route erzwungen bei K_0-Tags >= 0.7 score)"
+  q0_protection: "high (Q_0/Phronesis-Tags erzwingen Premium-Arbitration)"
+  i_min_contribution: "positive (zentraler Router statt ad-hoc Tool-Calls)"
+  wargame_status: "alignment_passed (Masterplan v2 Patch P6)"
+
+# CRUX-Pre-Call-Hook Integration (Layer 0)
+callbacks:
+  pre_call:
+    - scripts/crux-precall-hook.py:crux_pre_call
+  failure_callback:
+    - scripts/crux-precall-hook.py:log_call
+
 
 model_list:
   # ========== TIER 2: Premium Arbitration ==========
